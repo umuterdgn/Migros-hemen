@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
-const OrderSchema = new mongoose.Schema({
-  customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+const orderSchema = new mongoose.Schema({
+  customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   products: [
     {
       productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
@@ -9,7 +9,7 @@ const OrderSchema = new mongoose.Schema({
     }
   ],
   total: { type: Number, required: true },
-  createdAt: { type: Date, default: Date.now }
-});
+  status: { type: String, default: 'Hazırlanıyor' }
+}, { timestamps: true });
 
-module.exports = mongoose.model('Order', OrderSchema);
+module.exports = mongoose.model('Order', orderSchema);

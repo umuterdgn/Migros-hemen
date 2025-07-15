@@ -9,7 +9,7 @@
   },
   "sap.ui5": {
     "rootView": {
-      "viewName": "migros.view.Login",
+      "viewName": "migros.view.pp",
       "type": "XML",
       "async": true,
       "id": "app"
@@ -21,44 +21,46 @@
       }
     },
     "routing": {
-      "config": {
-        "routerClass": "sap.m.routing.Router",
-        "viewType": "XML",
-        "viewPath": "migros.view",
-        "controlId": "app",
-        "controlAggregation": "pages",
-        "bypassed": {
-          "target": "notFound"
-        }
-      },
-      "routes": [
-        {
-          "pattern": "",
-          "name": "login",
-          "target": "login"
-        },
-        {
-          "pattern": "customer",
-          "name": "customer",
-          "target": "customer"
-        },
-        {
-          "pattern": "store",
-          "name": "store",
-          "target": "store"
-        }
-      ],
-      "targets": {
-        "login": {
-          "viewName": "Login"
-        },
-        "customer": {
-          "viewName": "Customer"
-        },
-        "store": {
-          "viewName": "Store"
-        }
-      }
+  "config": {
+    "routerClass": "sap.m.routing.Router",
+    "viewType": "XML",
+    "viewPath": "migros.view",
+    "controlId": "app",
+    "controlAggregation": "pages",
+    "bypassed": {
+      "target": "notFound"
     }
+  },
+  "routes": [
+    {
+      "pattern": "",
+      "name": "Login",
+      "target": "Login"
+    },
+    {
+      "pattern": "store",
+      "name": "StoreDashboard",
+      "target": "StoreDashboard"
+    },
+    {
+      "pattern": "customer",
+      "name": "CustomerHome",
+      "target": "CustomerHome"
+    }
+  ],
+  "targets": {
+    "Login": {
+      "viewName": "Login",
+      "viewLevel": 0
+    },
+    "StoreDashboard": {
+      "viewName": "StoreDashboard"
+    },
+    "CustomerHome": {
+      "viewName": "CustomerHome"
+    }
+  }
+}
+
   }
 }

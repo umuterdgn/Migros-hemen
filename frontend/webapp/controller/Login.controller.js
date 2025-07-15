@@ -1,52 +1,41 @@
 sap.ui.define([
   "sap/ui/core/mvc/Controller",
   "sap/m/MessageToast",
-  "sap/ui/core/routing/History"
-], function (Controller, MessageToast, History) {
+  "sap/m/MessageBox"
+], function(Controller, MessageToast, MessageBox) {
   "use strict";
 
   return Controller.extend("migros.controller.Login", {
-    onInit: function () {},
-
-    onLogin: async function () {
+    onLoginPress: function () {
       const email = this.byId("emailInput").getValue();
       const password = this.byId("passwordInput").getValue();
       const role = this.byId("roleSelect").getSelectedKey();
 
-      if (!email || !password || !role) {
-        MessageToast.show("Lütfen tüm alanları doldurun");
-        return;
-      }
-
-      try {
-        const response = await fetch("http://localhost:5000/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password, role })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          MessageToast.show(data.msg || "Giriş başarısız");
-          return;
-        }
-
-        // Token ve user verilerini sakla
+      fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, role })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Giriş başarısız");
+        return res.json();
+      })
+      .then(data => {
         localStorage.setItem("token", data.token);
         localStorage.setItem("role", role);
+        MessageToast.show("Giriş başarılı");
 
-        // Rolüne göre yönlendirme
-        const oRouter = this.getOwnerComponent().getRouter();
-        if (role === "customer") {
-          oRouter.navTo("customer");
+        // Rol bazlı yönlendirme
+        if (role === "store") {
+          sap.ui.core.UIComponent.getRouterFor(this).navTo("StoreDashboard");
         } else {
-          oRouter.navTo("store");
+          sap.ui.core.UIComponent.getRouterFor(this).navTo("CustomerHome");
         }
-
-      } catch (err) {
-        MessageToast.show("Sunucu hatası: " + err.message);
-      }
+      })
+      .catch(err => {
+        this.byId("loginErrorText").setText("E-posta veya şifre hatalı").setVisible(true);
+        console.error(err);
+      });
     }
   });
 });
