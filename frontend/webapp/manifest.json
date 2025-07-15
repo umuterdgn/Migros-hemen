@@ -1,66 +1,110 @@
 {
   "sap.app": {
-    "id": "migros",
-    "type": "application",
-    "title": "Migros Hemen",
-    "applicationVersion": {
-      "version": "1.0.0"
-    }
+      "id": "migros",
+      "type": "application",
+      "i18n": "i18n/i18n.properties",
+      "applicationVersion": {
+          "version": "1.0.0"
+      },
+      "title": "{{appTitle}}",
+      "description": "{{appDescription}}",
+      "sourceTemplate": {
+          "id": "ui5template.basicSAPUI5ApplicationProject",
+          "version": "1.40.12"
+      }
+  },
+  "sap.ui": {
+      "technology": "UI5",
+      "icons": {
+          "icon": "",
+          "favIcon": "",
+          "phone": "",
+          "phone@2": "",
+          "tablet": "",
+          "tablet@2": ""
+      },
+      "deviceTypes": {
+          "desktop": true,
+          "tablet": true,
+          "phone": true
+      }
   },
   "sap.ui5": {
-    "rootView": {
-      "viewName": "migros.view.pp",
-      "type": "XML",
-      "async": true,
-      "id": "app"
-    },
-    "dependencies": {
-      "minUI5Version": "1.71",
-      "libs": {
-        "sap.m": {}
-      }
-    },
-    "routing": {
-  "config": {
-    "routerClass": "sap.m.routing.Router",
-    "viewType": "XML",
-    "viewPath": "migros.view",
-    "controlId": "app",
-    "controlAggregation": "pages",
-    "bypassed": {
-      "target": "notFound"
-    }
-  },
-  "routes": [
-    {
-      "pattern": "",
-      "name": "Login",
-      "target": "Login"
-    },
-    {
-      "pattern": "store",
-      "name": "StoreDashboard",
-      "target": "StoreDashboard"
-    },
-    {
-      "pattern": "customer",
-      "name": "CustomerHome",
-      "target": "CustomerHome"
-    }
-  ],
-  "targets": {
-    "Login": {
-      "viewName": "Login",
-      "viewLevel": 0
-    },
-    "StoreDashboard": {
-      "viewName": "StoreDashboard"
-    },
-    "CustomerHome": {
-      "viewName": "CustomerHome"
-    }
-  }
-}
+      "rootView": {
+          "viewName": "migros.view.App",
+          "type": "XML",
+          "async": true,
+          "id": "app"
+      },
+      "dependencies": {
+          "minUI5Version": "1.60.1",
+          "libs": {
+              "sap.ui.core": {},
+              "sap.m": {},
+              "sap.tnt": {}
+          }
+      },
+      "models": {
+          "i18n": {
+              "type": "sap.ui.model.resource.ResourceModel",
+              "settings": {
+                  "bundleName": "migros.i18n.i18n"
+              }
+          }
+      },
+      "routing": {
+          "config": {
+              "routerClass": "sap.m.routing.Router",
+              "viewType": "XML",
+              "viewPath": "migros.view",
+              "controlId": "app",
+              "controlAggregation": "pages",
+              "async": true
+          },
+          "routes": [
+              {
+                  "pattern": "",
+                  "name": "home",
+                  "target": "home"
+              },
+              {
+                "pattern": "product",
+                "name": "product",
+                "target": "product"
+            },
+              {
+                  "pattern": "users",
+                  "name": "users",
+                  "target": "users"
+              },
+              {
+                  "pattern": "login",
+                  "name": "login",
+                  "target": "login"
+              }
+          ],
+          "targets": {
+              "home": {
+                  "viewName": "Home",
+                  "viewLevel": 1
+              },
+              "users": {
+                  "viewName": "Users",
+                  "viewLevel": 2
+              },
+              "product": {
+                  "viewName": "Products",
+                  "viewType": "XML",
+                  "viewId": "productPage",
+                  "controlAggregation": "pages",
+                  "controlId": "app"
+                },
 
+              "login": {
+                  "viewName": "Login",
+                  "viewLevel": 0
+              }
+          }
+      }
   }
 }

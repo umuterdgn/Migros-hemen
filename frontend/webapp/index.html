@@ -1,19 +1,25 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
-    <title>Migros Hemen</title>
+    <meta charset="utf-8" />
+    <title>Migros Hemen Giriş Sayfası </title>
     <script
       id="sap-ui-bootstrap"
-      src="https://sdk.openui5.org/resources/sap-ui-core.js"
+      src="https://ui5.sap.com/resources/sap-ui-core.js"
+      data-sap-ui-libs="sap.m, sap.tnt"
+      data-sap-ui-compatVersion="edge"
       data-sap-ui-theme="sap_fiori_3"
+      data-sap-ui-async="true"
       data-sap-ui-resourceroots='{
         "migros": "./"
       }'
-      data-sap-ui-onInit="module:migros.Component"
-      data-sap-ui-compatVersion="edge"
-      data-sap-ui-async="true">
+      data-sap-ui-oninit="module:sap/ui/core/ComponentSupport">
+      
     </script>
+    
+    <link rel="stylesheet" type="text/css" href="css/style.css" />
   </head>
-  <body class="sapUiBody" id="content"></body>
+  <body class="sapUiBody">
+    <div data-sap-ui-component data-name="migros" data-id="container" data-settings="{}"></div>
+  </body>
 </html>

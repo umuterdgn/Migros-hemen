@@ -1,0 +1,320 @@
+/* Login Page Styles */
+
+.loginPage {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #a1730d);
+}
+
+.loginBox {
+  background: rgba(231, 155, 83, 0.9);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0px 10px 20px rgba(233, 199, 6, 0.3); 
+  width: 350px;
+  text-align: center;
+ title-color: #fff;
+}
+
+.inputMargin {
+  margin: 1rem 0;
+}
+
+.linkMargin {
+  margin-top: 0.5rem;
+  text-align: center;
+  color: #f3b121;
+  cursor: pointer;
+}
+
+.fullHeight {
+  height: 100vh;
+}
+
+
+
+/* Side Menu Overlay Styles */
+.hiddenSideMenu {
+    position: fixed !important;
+    top: 0 !important;
+    left: -250px !important; 
+    width: 250px !important;
+    height: 100vh !important;
+    z-index: 1000 !important;
+    background-color: #fff !important;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.3s ease-in-out !important;
+}
+
+.showSideMenu {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 250px !important;
+    height: 100vh !important;
+    z-index: 1000 !important;
+    background-color: #fff !important;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.3s ease-in-out !important;
+}
+
+/* Side Menu Navigation Items */
+.sapTntNavLI {
+    transition: all 0.2s ease;
+    padding: 10px 15px;
+}
+
+.sapTntNavLI:hover {
+    background-color: rgba(8, 84, 160, 0.1) !important;
+}
+
+.sapTntNavLI.sapTntNavLISelected {
+    background-color: rgba(8, 84, 160, 0.2) !important;
+    border-left: 3px solid #0854a0 !important;
+}
+
+/* Menu Button Styles */
+#menuButton {
+    background-color: transparent !important;
+    border: none !important;
+    color: #0854a0 !important;
+}
+
+#menuButton:hover {
+    background-color: rgba(8, 84, 160, 0.1) !important;
+}
+
+
+.menuOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1100;
+    display: none;
+}
+
+.menuOverlay.show {
+    display: block;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .hiddenSideMenu {
+        left: -220px !important;
+        width: 220px !important;
+    }
+    
+    .showSideMenu {
+        width: 220px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .hiddenSideMenu {
+        left: -200px !important;
+        width: 200px !important;
+    }
+    
+    .showSideMenu {
+        width: 200px !important;
+    }
+}
+/* Users Page Styles */
+.usersPage {
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.usersContainer {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.userCard {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+  padding: 1rem;
+}
+
+.userHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.userActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.addUserPanel {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.formGrid .sapMInput {
+  width: 100%;
+}
+
+/* Table Styles */
+.usersTable {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.usersTable .sapMListTblRow {
+  border-bottom: 1px solid #eee;
+}
+
+.usersTable .sapMListTblRow:hover {
+  background-color: #f8f9fa;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .usersContainer {
+    padding: 1rem;
+  }
+  
+  .userHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .userActions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* Home Page Styles */
+.homePage {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.welcomePanel {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.statsContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.statCard {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.statCard:hover {
+  transform: translateY(-2px);
+}
+
+.statNumber {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #2196f3;
+  margin-bottom: 0.5rem;
+}
+
+.statLabel {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Navigation Styles */
+.sideNavigation {
+  background: white;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.navItem {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.navItem:hover {
+  background-color: #f8f9fa;
+}
+
+.navItem.active {
+  background-color: #e3f2fd;
+  border-left: 4px solid #2196f3;
+}
+
+/* Button Styles */
+.primaryButton {
+  background: linear-gradient(135deg, #2196f3, #21cbf3);
+  border: none;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.primaryButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(243, 159, 33, 0.3);
+}
+
+.secondaryButton {
+  background: white;
+  border: 2px solid #2196f3;
+  color: #2196f3;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.secondaryButton:hover {
+  background: #2196f3;
+  color: white;
+}

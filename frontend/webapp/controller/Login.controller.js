@@ -1,41 +1,88 @@
 sap.ui.define([
   "sap/ui/core/mvc/Controller",
   "sap/m/MessageToast",
-  "sap/m/MessageBox"
-], function(Controller, MessageToast, MessageBox) {
+  "sap/ui/model/json/JSONModel"
+], function(Controller, MessageToast, JSONModel) {
   "use strict";
 
-  return Controller.extend("migros.controller.Login", {
-    onLoginPress: function () {
-      const email = this.byId("emailInput").getValue();
-      const password = this.byId("passwordInput").getValue();
-      const role = this.byId("roleSelect").getSelectedKey();
+  return Controller.extend("migros.view.Login", {
 
-      fetch("http://localhost:5000/api/auth/login", {
+_mockUsers: {
+      "admin@example.com": {
+        password: "admin123",
+        name: "Admin User",
+        role: "admin"
+      },
+      "user@example.com": {
+        password: "user123",
+        name: "Regular User",
+        role: "user"
+      }
+    },
+
+    onInit: function () {
+      // Kullanıcı modelini sıfırla
+      this.getOwnerComponent().setModel(new JSONModel(), "user");
+    },
+
+    onLoginPress: function() {
+      var sEmail = this.byId("emailInput").getValue().trim();
+      var sPassword = this.byId("passwordInput").getValue().trim();
+
+      if (!sEmail || !sPassword) {
+        MessageToast.show("Lütfen e-posta ve şifre girin.");
+        return;
+      }
+
+      fetch("http://localhost:8080/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, role })
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email: sEmail, password: sPassword })
       })
-      .then(res => {
-        if (!res.ok) throw new Error("Giriş başarısız");
-        return res.json();
-      })
-      .then(data => {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("role", role);
-        MessageToast.show("Giriş başarılı");
+      .then(response => response.json())
+      .then(data => this._handleLoginResponse(data))
+      .catch(err => this._handleLoginError(err));
+    },
 
-        // Rol bazlı yönlendirme
-        if (role === "store") {
-          sap.ui.core.UIComponent.getRouterFor(this).navTo("StoreDashboard");
-        } else {
-          sap.ui.core.UIComponent.getRouterFor(this).navTo("CustomerHome");
-        }
-      })
-      .catch(err => {
-        this.byId("loginErrorText").setText("E-posta veya şifre hatalı").setVisible(true);
-        console.error(err);
-      });
+    _handleLoginResponse: function(data) {
+      if (data.success && data.token && data.user) {
+        // JWT token'ı localStorage'a kaydet
+        localStorage.setItem("jwtToken", data.token);
+
+        // Kullanıcı modelini sap.ui.model.json.JSONModel ile ayarla
+        var oUserModel = new JSONModel({
+          name: data.user.name,
+          role: data.user.role,
+          email: data.user.email
+        });
+        this.getOwnerComponent().setModel(oUserModel, "user");
+
+        MessageToast.show("Giriş başarılı!");
+        this._navigateToHomePage();
+      } else {
+        MessageToast.show(data.message || "Giriş başarısız.");
+      }
+    },
+
+    _handleLoginError: function(err) {
+      MessageToast.show("Sunucu hatası. Daha sonra tekrar deneyin.");
+      console.error(err);
+    },
+
+    _navigateToHomePage: function() {
+      var oRouter = this.getOwnerComponent().getRouter();
+      oRouter.navTo("home");
+    },
+
+    onForgotPassword: function() {
+      MessageToast.show("Şifre yenileme özelliği henüz aktif değil.");
+    },
+
+    onSignup: function() {
+      var oRouter = this.getOwnerComponent().getRouter();
+      oRouter.navTo("signup");
     }
   });
 });

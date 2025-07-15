@@ -1,24 +1,28 @@
-<mvc:View
+<mvc:View 
   xmlns:mvc="sap.ui.core.mvc"
   xmlns="sap.m"
+  xmlns:core="sap.ui.core"
   controllerName="migros.controller.Login">
 
-  <Page title="Migros Hemen - Giriş">
+   <Page showHeader="false">
     <content>
-      <VBox class="sapUiSmallMargin sapUiMediumMarginTop">
-        <Input id="emailInput" placeholder="E-posta" type="Email"/>
-        <Input id="passwordInput" placeholder="Şifre" type="Password" />
+      <VBox justifyContent="Center" alignItems="Center" class="fullHeight">
+          <VBox class="loginBox" alignItems="Center" justifyContent="Center">
+            <Title text="Migros Hemen Giriş Sayfası" level="H1" class="inputMargin" />
+            
+            <Input id="emailInput" placeholder="Email Address" class="inputMargin" width="100%" />
+            <Input id="passwordInput" placeholder="Password" type="Password" class="inputMargin" width="100%" />
 
-        <Select id="roleSelect" selectedKey="customer">
-          <items>
-            <core:Item key="customer" text="Müşteri" />
-            <core:Item key="store" text="Mağaza" />
-          </items>
-        </Select>
+            <Link text="Forgot Password" class="linkMargin" press="onForgotPassword" />
 
-        <Button text="Giriş Yap" press="onLoginPress" type="Emphasized" />
-        <Text id="loginErrorText" text="" visible="false" class="sapUiTinyMarginTop" />
-      </VBox>
-    </content>
-  </Page>
+            <Button text="Login" type="Emphasized" width="100%" class="inputMargin" press="onLoginPress" />
+
+            <HBox class="inputMargin" justifyContent="Center">
+              <Text text="Don't have an account?" />
+              <Link text=" Signup" press="onSignup" />
+            </HBox>
+          </VBox>
+        </VBox>
+      </content>
+    </Page>
 </mvc:View>
