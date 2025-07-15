@@ -1,0 +1,24 @@
+<mvc:View
+  controllerName="migros.controller.Login"
+  xmlns:mvc="sap.ui.core.mvc"
+  displayBlock="true"
+  xmlns="sap.m">
+  
+  <Page title="Migros Hemen Giriş">
+    <content>
+      <VBox class="sapUiSmallMargin sapUiMediumPadding" alignItems="Center" justifyContent="Center">
+        <Input id="emailInput" placeholder="E-Posta" width="300px" />
+        <Input id="passwordInput" type="Password" placeholder="Şifre" width="300px" />
+        
+        <Select id="roleSelect" width="300px">
+          <items>
+            <core:Item key="customer" text="Müşteri" />
+            <core:Item key="store" text="Mağaza" />
+          </items>
+        </Select>
+        
+        <Button text="Giriş Yap" press="onLogin" width="300px" class="sapUiTinyMarginTop" type="Emphasized" />
+      </VBox>
+    </content>
+  </Page>
+</mvc:View>
