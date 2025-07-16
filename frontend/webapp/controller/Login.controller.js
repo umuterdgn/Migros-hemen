@@ -7,20 +7,23 @@ sap.ui.define([
 
   return Controller.extend("migros.view.Login", {
 
-_mockUsers: {
-      "admin@example.com": {
-        password: "admin123",
-        name: "Admin User",
-        role: "admin"
-      },
-      "user@example.com": {
-        password: "user123",
-        name: "Regular User",
-        role: "user"
-      }
-    },
+// _mockUsers: {
+//       "admin@example.com": {
+//         password: "admin123",
+//         name: "Admin User",
+//         role: "admin"
+//       },
+//       "user@example.com": {
+//         password: "user123",
+//         name: "Regular User",
+//         role: "user"
+//       }
+//     },
 
-    
+    onInit: function () {
+      // Kullanıcı modelini sıfırla
+      this.getOwnerComponent().setModel(new JSONModel(), "user");
+    },
 
     onLoginPress: function() {
       var sEmail = this.byId("emailInput").getValue().trim();
@@ -31,7 +34,7 @@ _mockUsers: {
         return;
       }
 
-      fetch("http://localhost:5000/api/auth/login", {
+      fetch("http://localhost:8080/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -54,7 +57,7 @@ _mockUsers: {
           role: data.user.role,
           email: data.user.email
         });
-        this.getOwnerComponent().setModel(oUserModel, "users");
+        this.getOwnerComponent().setModel(oUserModel, "user");
 
         MessageToast.show("Giriş başarılı!");
         this._navigateToHomePage();
@@ -78,8 +81,8 @@ _mockUsers: {
     },
 
     onSignup: function() {
-      var oRouter = this.getOwnerComponent().getRouter();
-      oRouter.navTo("signup");
+    var oRouter = this.getOwnerComponent().getRouter();
+    oRouter.navTo("register");
     }
   });
 });

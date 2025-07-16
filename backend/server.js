@@ -5,6 +5,38 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 require("dotenv").config();
 
+app.post("/api/auth/register", async (req, res) => {
+  const { name, email, password } = req.body;
+
+  if (!name || !email || !password) {
+    return res.status(400).json({ success: false, message: "Eksik bilgi" });
+  }
+
+  try {
+    db.query("SELECT * FROM users WHERE email = ?", [email], async (err, results) => {
+      if (err) return res.status(500).json({ success: false, message: "Sunucu hatası" });
+
+      if (results.length > 0) {
+        return res.status(409).json({ success: false, message: "Bu e-posta zaten kayıtlı." });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      db.query(
+        "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)",
+        [name, email, hashedPassword, "user"],
+        (err, result) => {
+          if (err) return res.status(500).json({ success: false, message: "Kayıt başarısız" });
+          res.status(201).json({ success: true, message: "Kayıt başarılı" });
+        }
+      );
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Sunucu hatası" });
+  }
+});
+
+
 const app = express();
 app.use(cors());
 app.use(express.json());

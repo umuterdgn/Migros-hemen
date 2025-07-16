@@ -1,0 +1,28 @@
+<mvc:View
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns="sap.m"
+  controllerName="migros.controller.Register">
+
+  <Page showHeader="false">
+    <content>
+      <VBox justifyContent="Center" alignItems="Center" class="fullHeight">
+        <VBox class="loginBox" alignItems="Center" justifyContent="Center">
+
+          <Title text="Migros Hemen Kayıt Sayfası" level="H1" class="inputMargin" />
+
+          <Input id="nameInput" placeholder="Adınız" class="inputMargin" width="100%" />
+          <Input id="emailInput" placeholder="E-posta" class="inputMargin" width="100%" />
+          <Input id="passwordInput" placeholder="Şifre" type="Password" class="inputMargin" width="100%" />
+
+          <Button text="Kayıt Ol" type="Emphasized" width="100%" class="inputMargin" press="onRegisterPress" />
+
+          <HBox class="inputMargin" justifyContent="Center">
+            <Text text="Zaten hesabınız var mı?" />
+            <Link text=" Giriş Yap" press="onNavigateLogin" />
+          </HBox>
+
+        </VBox>
+      </VBox>
+    </content>
+  </Page>
+</mvc:View>

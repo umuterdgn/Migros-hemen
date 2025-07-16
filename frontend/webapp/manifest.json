@@ -67,48 +67,58 @@
                   "target": "login"
               },
               {
+               "pattern": "register",
+               "name": "register",
+               "target": "register"
+             },
+              {
                 "pattern": "product",
                 "name": "product",
                 "target": "product"
             },
-              {
-                  "pattern": "users",
-                  "name": "users",
-                  "target": "users"
-              },
-              {
-                  "pattern": "login",
-                  "name": "login",
-                  "target": "login"
-              },
+                {
+                    "pattern": "users",
+                    "name": "users",
+                    "target": "users"
+                },
+                {
+                    "pattern": "login",
+                    "name": "login",
+                    "target": "login"
+                },
                 {
                     "pattern": "home",
                     "name": "home",
                     "target": "home"
                 }
-          ],
-          "targets": {
-              "home": {
-                  "viewName": "Home",
-                  "viewPath": "migros.view" 
-              },
-              "users": {
-                  "viewName": "Users"
-                
-              },
-              "product": {
-                  "viewName": "Products",
-                  "viewType": "XML",
-                  "viewId": "productPage",
-                  "controlAggregation": "pages",
-                  "controlId": "app"
+            ],
+                    "targets": {
+                    "home": {
+                    "viewName": "Home",
+                    "viewPath": "migros.view" 
                 },
-"login": {
-    "viewName": "Login",
-    "viewPath": "migros.view",
-    "viewLevel": 1
-  }
-          }
-      }
-  }
+                    "users": {
+                    "viewName": "Users"
+                
+                },
+                    "product": {
+                    "viewName": "Products",
+                    "viewType": "XML",
+                    "viewId": "productPage",
+                    "controlAggregation": "pages",
+                    "controlId": "app"
+                },
+                    "login": {
+                    "viewName": "Login",
+                    "viewPath": "migros.view",
+                    "viewLevel": 1
+                },
+                    "register": {
+                    "viewName": "Register",
+                    "viewPath": "migros.view"
+                    
+                }
+        }
+        }
+    }
 }
