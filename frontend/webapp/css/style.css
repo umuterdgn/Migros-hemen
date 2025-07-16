@@ -301,7 +301,7 @@
 
 .primaryButton:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(243, 159, 33, 0.3);
+  box-shadow: 0 4px 12px rgb(243, 159, 33);
 }
 
 .secondaryButton {
