@@ -1,76 +1,57 @@
 const express = require("express");
-const mongoose = require("mongoose");
+const mysql = require("mysql2");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 require("dotenv").config();
 
 const app = express();
-
-app.use(express.json());
 app.use(cors());
-
-// MongoDB bağlantısı
-mongoose.connect("mongodb://localhost:27017/userApp", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => {
-    console.log("MongoDB'ye başarıyla bağlanıldı");
-}).catch(err => {
-    console.error("MongoDB bağlantı hatası:", err);
+app.use(express.json());
+// MySQL bağlantısı
+const db = mysql.createConnection({
+  host: "localhost",
+  user: "root", // kendi MySQL kullanıcı adını yaz
+  password: "Hopekutay064431", // kendi MySQL şifreni yaz
+  database: "migros" // veritabanı adın
 });
 
-// Kullanıcı şeması ve modeli
-const UserSchema = new mongoose.Schema({
-    name: String,
-    surname: String,
-    email: String,
-    role: String
-});
-const User = mongoose.model("User", UserSchema);
+// Giriş API'si
+app.post("/api/auth/login", (req, res) => {
+  const { email, password } = req.body;
 
-// Kullanıcıları getiren API
-app.get("/api/users", async (req, res) => {
-    try {
-        const users = await User.find();
-        res.json(users);
-    } catch (err) {
-        res.status(500).json({ message: "Sunucu hatası" });
+  db.query("SELECT * FROM users WHERE email = ?", [email], async (err, results) => {
+    if (err) return res.status(500).json({ success: false, message: "Sunucu hatası" });
+
+    if (results.length === 0) {
+      return res.status(401).json({ success: false, message: "E-posta kayıtlı değil" });
     }
-});
+    const user = results[0];
+    const isMatch = await bcrypt.compare(password, user.password);
 
-// Yeni kullanıcı ekleyen API
-app.post("/api/users", async (req, res) => {
-    const { name, surname, email, role } = req.body;
-    const newUser = new User({ name, surname, email, role });
-    try {
-        await newUser.save();
-        res.status(201).json(newUser);
-    } catch (err) {
-        res.status(500).json({ message: "Sunucu hatası" });
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: "Şifre hatalı" });
     }
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      "gizliAnahtar", // bunu .env içinde de saklayabilirsin
+      { expiresIn: "1h" }
+    );
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+  });
 });
 
-// Kullanıcıyı güncelleyen API
-app.put("/api/users/:id", async (req, res) => {
-    const { id } = req.params;
-    const { name, surname, email, role } = req.body;
-    try {
-        const updatedUser = await User.findByIdAndUpdate(id, { name, surname, email, role }, { new: true });
-        res.json(updatedUser);
-    } catch (err) {
-        res.status(500).json({ message: "Sunucu hatası" });
-    }
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`Sunucu ${PORT} portunda çalışıyor`);
 });
-
-// Kullanıcıyı silen API
-app.delete("/api/users/:id", async (req, res) => {
-    const { id } = req.params;
-    try {
-        await User.findByIdAndDelete(id);
-        res.json({ message: "Kullanıcı başarıyla silindi" });
-    } catch (err) {
-        res.status(500).json({ message: "Sunucu hatası" });
-    }
-});
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
