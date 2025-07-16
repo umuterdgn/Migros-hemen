@@ -32,9 +32,7 @@
   "sap.ui5": {
       "rootView": {
           "viewName": "migros.view.App",
-          "type": "XML",
-          "async": true,
-          "id": "app"
+          "type": "XML"
       },
       "dependencies": {
           "minUI5Version": "1.60.1",
@@ -55,8 +53,9 @@
       "routing": {
           "config": {
               "routerClass": "sap.m.routing.Router",
+              "type":"View",
               "viewType": "XML",
-              "viewPath": "migros.view",
+              "path": "migros.",
               "controlId": "app",
               "controlAggregation": "pages",
               "async": true
@@ -64,8 +63,8 @@
           "routes": [
               {
                   "pattern": "",
-                  "name": "home",
-                  "target": "home"
+                  "name": "login",
+                  "target": "login"
               },
               {
                 "pattern": "product",
@@ -81,16 +80,21 @@
                   "pattern": "login",
                   "name": "login",
                   "target": "login"
-              }
+              },
+                {
+                    "pattern": "home",
+                    "name": "home",
+                    "target": "home"
+                }
           ],
           "targets": {
               "home": {
                   "viewName": "Home",
-                  "viewLevel": 1
+                  "viewPath": "migros.view" 
               },
               "users": {
-                  "viewName": "Users",
-                  "viewLevel": 2
+                  "viewName": "Users"
+                
               },
               "product": {
                   "viewName": "Products",
@@ -99,11 +103,11 @@
                   "controlAggregation": "pages",
                   "controlId": "app"
                 },
-
-              "login": {
-                  "viewName": "Login",
-                  "viewLevel": 0
-              }
+"login": {
+    "viewName": "Login",
+    "viewPath": "migros.view",
+    "viewLevel": 1
+  }
           }
       }
   }

@@ -20,10 +20,7 @@ _mockUsers: {
       }
     },
 
-    onInit: function () {
-      // Kullanıcı modelini sıfırla
-      this.getOwnerComponent().setModel(new JSONModel(), "user");
-    },
+    
 
     onLoginPress: function() {
       var sEmail = this.byId("emailInput").getValue().trim();
@@ -34,7 +31,7 @@ _mockUsers: {
         return;
       }
 
-      fetch("http://localhost:8080/auth/login", {
+      fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -57,7 +54,7 @@ _mockUsers: {
           role: data.user.role,
           email: data.user.email
         });
-        this.getOwnerComponent().setModel(oUserModel, "user");
+        this.getOwnerComponent().setModel(oUserModel, "users");
 
         MessageToast.show("Giriş başarılı!");
         this._navigateToHomePage();
