@@ -1,0 +1,17 @@
+<mvc:View
+  controllerName="migros.controller.Home"
+  xmlns="sap.m"
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns:core="sap.ui.core">
+  
+  <Page showHeader="false">
+    <VBox id="categoryVBox" items="{/categories}">
+      <items>
+        <HBox alignItems="Center" class="sapUiTinyMargin">
+          <Image src="{image}" width="80px" height="80px" />
+          <Button text="{name}" press=".onCategoryPress" data-categoryId="{id}" />
+        </HBox>
+      </items>
+    </VBox>
+  </Page>
+</mvc:View>
