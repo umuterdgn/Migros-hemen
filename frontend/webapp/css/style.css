@@ -317,3 +317,32 @@
   background: #2196f3;
   color: white;
 }
+
+
+
+
+.categoryBox {
+  background-color: #fffaf3;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  cursor: pointer;
+  padding: 10px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-align: center;
+}
+
+.categoryBox:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.categoryTitle {
+  margin-top: 8px;
+  font-weight: bold;
+  font-size: 14px;
+  color: #222;
+}
+
+.categoryFlexBox {
+  padding: 20px;
+}

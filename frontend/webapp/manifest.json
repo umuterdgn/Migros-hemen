@@ -72,8 +72,8 @@
                "target": "register"
              },
               {
-                "pattern": "product",
-                "name": "product",
+                "pattern": "products/{ad}",
+                "name": "products",
                 "target": "product"
             },
                 {
@@ -104,7 +104,7 @@
                     "product": {
                     "viewName": "Products",
                     "viewType": "XML",
-                    "viewId": "productPage",
+                    "viewId": "product",
                     "controlAggregation": "pages",
                     "controlId": "app"
                 },
