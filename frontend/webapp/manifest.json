@@ -72,8 +72,8 @@
                "target": "register"
              },
               {
-                "pattern": "products/{ad}",
-                "name": "products",
+                "pattern": "product/{categoryId}/ {categoryName}",
+                "name": "productRoute",
                 "target": "product"
             },
                 {
@@ -93,6 +93,7 @@
                 }
             ],
                     "targets": {
+
                     "home": {
                     "viewName": "Home",
                     "viewPath": "migros.view" 
@@ -102,11 +103,12 @@
                 
                 },
                     "product": {
-                    "viewName": "Products",
+                    "viewName": "Product",
                     "viewType": "XML",
                     "viewId": "product",
                     "controlAggregation": "pages",
-                    "controlId": "app"
+                    "controlId": "app",
+                    "viewPath": "migros.view" 
                 },
                     "login": {
                     "viewName": "Login",

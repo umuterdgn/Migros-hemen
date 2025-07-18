@@ -15,6 +15,10 @@ const db = mysql.createConnection({
   database: "migros" // veritabanı adın
 });
 
+const PORT = process.env.PORT || 8081;
+app.listen(PORT, () => {
+  console.log(`Sunucu ${PORT} portunda çalışıyor`);
+});
 // Giriş API'si
 app.post("/api/auth/login", (req, res) => {
   const { email, password } = req.body;
@@ -90,39 +94,121 @@ app.get("/api/categories", (req, res) => {
         res.json(results);
     });
 });
-
+// tüm örnekler bitince ayriyeten body parser ile on taraftan post atılarak çalışacak hale getiirilecek.
 // Bir kategoriye ait alt kategoriler
-app.get("/api/subcategories/:categoryId", (req, res) => {
-    const { categoryId } = req.params;
-    db.query("SELECT * FROM subcategories WHERE category_id = ?", [categoryId], (err, results) => {
+app.get("/api/getSubCategories", (req, res) => {
+    var categoryId = req.query.kategori;
+    console.log("Category ID:", categoryId);
+    db.query("SELECT * FROM subcategories WHERE kategori_id = ?", [categoryId], (err, results) => {
         if (err) return res.status(500).json(err);
         res.json(results);
     });
 });
 
-// Bir alt kategoriye ait ürünler
-app.get("/api/products/:subcategoryId", (req, res) => {
-    const { subcategoryId } = req.params;
-    db.query("SELECT * FROM products WHERE subcategory_id = ?", [subcategoryId], (err, results) => {
+app.get("/api/products", (req, res) => {
+    const { subcategory_id } = req.query;
+    db.query("SELECT * FROM products WHERE subcategory_id = ?", [subcategory_id], (err, results) => {
         if (err) return res.status(500).json(err);
         res.json(results);
     });
 });
 
-// Belirli bir kategoriye ait tüm ürünler (alt kategorilere bakılmaksızın)
+// Kategoriye ait tüm ürünler (alt kategorileri de dahil)
 app.get("/api/category-products/:categoryId", (req, res) => {
     const { categoryId } = req.params;
     db.query(`
         SELECT p.* FROM products p 
         JOIN subcategories s ON p.subcategory_id = s.id
-        WHERE s.category_id = ?
+        WHERE s.kategori_id = ?
     `, [categoryId], (err, results) => {
         if (err) return res.status(500).json(err);
         res.json(results);
     });
 });
-// burdan devam
-const PORT = process.env.PORT || 8081;
-app.listen(PORT, () => {
-  console.log(`Sunucu ${PORT} portunda çalışıyor`);
+//ürün ekleme 
+app.post("/api/products", (req, res) => {
+  const { name, price, stock, image_url, subcategory_id, discount_type, discount_value, category } = req.body;
+
+  if (!name || !price || !stock || !category) {
+    return res.status(400).json({ success: false, message: "Eksik bilgi var." });
+  }
+
+  const sql = `
+    INSERT INTO products (name, price, stock, image_url, subcategory_id, discount_type, discount_value, category)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `;
+
+  db.query(sql, [name, price, stock, image_url, subcategory_id, discount_type, discount_value, category], (err, result) => {
+    if (err) {
+      console.error("Ürün ekleme hatası:", err); // Hata detayını konsola yazdır
+      return res.status(500).json({ success: false, message: "Ürün eklenemedi", error: err.message });
+    }
+    res.status(201).json({ success: true, message: "Ürün başarıyla eklendi", productId: result.insertId });
+  });
+});
+
+
+
+// Ürün güncelleme (id query parametre olarak geliyor)
+
+app.put("/api/products", (req, res) => {
+  const id = req.query.id;
+  const { name, price, stock, image_url, subcategory_id, discount_type, discount_value, category } = req.body;
+
+  if (!id) {
+    return res.status(400).json({ success: false, message: "ID belirtilmeli" });
+  }
+
+  const sql = `
+    UPDATE products SET name=?, price=?, stock=?, image_url=?, subcategory_id=?, discount_type=?, discount_value=?, category=?
+    WHERE id=?
+  `;
+
+  db.query(sql, [name, price, stock, image_url, subcategory_id, discount_type, discount_value, category, id], (err, result) => {
+    if (err) return res.status(500).json({ success: false, message: "Güncelleme başarısız" });
+    res.json({ success: true, message: "Ürün başarıyla güncellendi" });
+  });
+});
+
+// Ürün silme (id query parametre olarak geliyor)
+app.delete("/api/products", (req, res) => {
+  const id = req.query.id;
+
+  if (!id) {
+    return res.status(400).json({ success: false, message: "ID belirtilmeli" });
+  }
+
+  db.query("DELETE FROM products WHERE id=?", [id], (err, result) => {
+    if (err) return res.status(500).json({ success: false, message: "Silme başarısız" });
+    res.json({ success: true, message: "Ürün başarıyla silindi" });
+  });
+});
+// fotoğraf indirme için
+const multer = require("multer");
+const path = require("path");
+
+// Upload klasörü
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname);
+    const fileName = Date.now() + ext;
+    cb(null, fileName);
+  }
+});
+
+const upload = multer({ storage: storage });
+
+app.use("/uploads", express.static("uploads")); // resimlere dışarıdan erişim
+
+// Görsel yükleme endpoint’i
+app.post("/api/upload", upload.single("image"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: "Dosya yok" });
+  }
+
+  const fileUrl = `http://localhost:${PORT}/uploads/${req.file.filename}`;
+  res.status(200).json({ success: true, imageUrl: fileUrl });
 });

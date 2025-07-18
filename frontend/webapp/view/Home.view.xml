@@ -6,10 +6,74 @@
   displayBlock="true">
 
   <Page title="Kategoriler">
-    <ScrollContainer horizontal="true" vertical="false">
-      <HBox id="categoryContainer" justifyContent="Center" alignItems="Center" wrap="Wrap">
-        <!-- Dinamik olarak controllerdan eklenecek -->
-      </HBox>
-    </ScrollContainer>
+
+  <!-- Admin panel -->
+
+    <Panel headerText="Ürün Ekle" class="sapUiResponsiveMargin">
+    <VBox class="sapUiSmallMargin">
+
+    <VBox class="sapUiSmallMargin">
+
+      <Select
+        items="{/categories}"
+        selectedKey="{/newProduct/kategori_id}"
+        change="onCategoryChange"
+        width="200px">
+        <core:Item key="{id}" text="{ad}" />
+      </Select>
+
+      <Select
+  items="{/subcategories}"
+  selectedKey="{/newProduct/subcategory_id}"
+  change="onSubCategoryChange"
+  width="200px">
+  <core:Item key="{id}" text="{ad}" />
+</Select>
+
+
+      <!-- Diğer inputlar buraya -->
+
+    </VBox>
+
+    <Input placeholder="Ürün Adı" value="{newProduct/ad}" width="20%"/>
+    <TextArea placeholder="Açıklama" value="{newProduct/aciklama}" width="30%"/>
+    <Input placeholder="Fiyat" value="{newProduct/fiyat}" width="20%"/>
+   <!-- file upload kullanılacak  -->
+    <VBox id="dropBox"
+      class="dropArea"
+      dragEnter="onDragEnter"
+      dragOver="onDragOver"
+      drop="onDrop"
+      press="onFileUploadClick"
+      width="100%"
+      height="150px"
+      alignItems="Center"
+      justifyContent="Center">
+  <Text text="Dosyanızı buraya sürükleyin veya tıklayın" />
+</VBox>
+
+    <!-- Önizleme -->
+    <Image id="previewImage" visible="false" width="200px" height="auto"/>
+
+    
+    <Button text="Ürün Ekle" press="onUrunEkle"/>
+
+  </VBox>
+
+  <!-- kategoriler -->
+</Panel>
+    <HBox justifyContent="Center">
+      <VBox width="100%" alignItems="Center">
+        <HBox
+          id="categoryContainer"
+          wrap="Wrap"
+          justifyContent="Center"
+          alignItems="Center"
+          width="calc(100% - 100px)"
+          style="margin-left:50px; margin-right:50px">
+          <!-- Controller'dan dinamik eklenecek -->
+        </HBox>
+      </VBox>
+    </HBox>
   </Page>
 </mvc:View>

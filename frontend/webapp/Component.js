@@ -22,7 +22,7 @@ sap.ui.define([
 
           // Router'ı Başlat
           this.getRouter().initialize();
-          this.getRouter().navTo("login"); 
+        //   this.getRouter().navTo("login"); 
       },
 
       createContent: function () {
