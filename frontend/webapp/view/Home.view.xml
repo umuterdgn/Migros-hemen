@@ -3,65 +3,84 @@
   xmlns:mvc="sap.ui.core.mvc"
   xmlns="sap.m"
   xmlns:core="sap.ui.core"
+  xmlns:unified="sap.ui.unified"
   displayBlock="true">
 
   <Page title="Kategoriler">
+    <HBox>
+      <!-- Sidebar -->
+      <VBox width="150px" class="sapUiSmallMarginEnd">
+        <Button text="Ürün Ekle" press="onShowAddProduct" width="100%" />
+        <Button text="Ürünler" press="onShowProductList" width="100%" class="sapUiTinyMarginTop"/>
+      </VBox>
 
-  <!-- Admin panel -->
+      <!-- Dinamik içerik alanı -->
+      <VBox id="contentContainer" width="100%">
+        <!-- Ürün Ekleme Paneli -->
+        <Panel id="addProductPanel" headerText="Ürün Ekle" class="sapUiResponsiveMargin">
+          <VBox class="sapUiSmallMargin">
 
-    <Panel headerText="Ürün Ekle" class="sapUiResponsiveMargin">
-    <VBox class="sapUiSmallMargin">
+            <Select
+              items="{/categories}"
+              selectedKey="{/newProduct/kategori_id}"
+              change="onCategoryChange"
+              width="200px">
+              <core:Item key="{id}" text="{ad}" />
+            </Select>
 
-    <VBox class="sapUiSmallMargin">
+            <Select
+              items="{/subcategories}"
+              selectedKey="{/newProduct/subcategory_id}"
+              change="onSubCategoryChange"
+              width="200px">
+              <core:Item key="{id}" text="{ad}" />
+            </Select>
 
-      <Select
-        items="{/categories}"
-        selectedKey="{/newProduct/kategori_id}"
-        change="onCategoryChange"
-        width="200px">
-        <core:Item key="{id}" text="{ad}" />
-      </Select>
+            <Input placeholder="Ürün Adı" value="{/newProduct/ad}" width="300px" />
+            <Input placeholder="Fiyat" type="Number" value="{/newProduct/price}" width="300px" />
+            <Input placeholder="Stok" type="Number" value="{/newProduct/stock}" width="300px" />
+            <Input placeholder="İndirim Tipi (none/percent/amount)" value="{/newProduct/discount_type}" width="300px" />
+            <Input placeholder="İndirim Değeri" type="Number" value="{/newProduct/discount_value}" width="300px" />
 
-      <Select
-  items="{/subcategories}"
-  selectedKey="{/newProduct/subcategory_id}"
-  change="onSubCategoryChange"
-  width="200px">
-  <core:Item key="{id}" text="{ad}" />
-</Select>
+            <unified:FileUploader
+              id="fileUploader"
+              name="image"
+              uploadUrl="http://localhost:8081/api/uploads"
+              tooltip="Görsel yükle"
+              uploadOnChange="true"
+              buttonOnly="true"
+              fileType="jpg,png,jpeg"
+              change="onFileChange"
+              uploadComplete="onUploadComplete"
+              maximumFileSize="5"
+              style="Emphasized"
+              fileName="{/newProduct/image_url}"
+              mimeType="image/png,image/jpeg" />
 
+            <Image id="previewImage" visible="false" width="200px" height="auto" />
 
-      <!-- Diğer inputlar buraya -->
+            <Button text="Ürün Ekle" press="onUrunEkle" type="Emphasized" />
+          </VBox>
+        </Panel>
 
-    </VBox>
+        <!-- Ürün Listesi -->
+        <Panel id="productListPanel" headerText="Ürünler" class="sapUiResponsiveMargin" visible="false">
+          <VBox class="sapUiSmallMargin">
+            <SearchField placeholder="Ara..." search="onSearchProduct" width="300px" />
+            <Select change="onSortProduct" width="300px">
+              <core:Item key="name" text="Ada göre sırala" />
+              <core:Item key="price" text="Fiyata göre sırala" />
+              <core:Item key="stock" text="Stoka göre sırala" />
+            </Select>
+            <List id="productList" items="{/productList}">
+              <StandardListItem title="{name}" description="{price} ₺ / Stok: {stock}" />
+            </List>
+          </VBox>
+        </Panel>
+      </VBox>
+    </HBox>
 
-    <Input placeholder="Ürün Adı" value="{newProduct/ad}" width="20%"/>
-    <TextArea placeholder="Açıklama" value="{newProduct/aciklama}" width="30%"/>
-    <Input placeholder="Fiyat" value="{newProduct/fiyat}" width="20%"/>
-   <!-- file upload kullanılacak  -->
-    <VBox id="dropBox"
-      class="dropArea"
-      dragEnter="onDragEnter"
-      dragOver="onDragOver"
-      drop="onDrop"
-      press="onFileUploadClick"
-      width="100%"
-      height="150px"
-      alignItems="Center"
-      justifyContent="Center">
-  <Text text="Dosyanızı buraya sürükleyin veya tıklayın" />
-</VBox>
-
-    <!-- Önizleme -->
-    <Image id="previewImage" visible="false" width="200px" height="auto"/>
-
-    
-    <Button text="Ürün Ekle" press="onUrunEkle"/>
-
-  </VBox>
-
-  <!-- kategoriler -->
-</Panel>
+    <!-- Kategoriler alanı -->
     <HBox justifyContent="Center">
       <VBox width="100%" alignItems="Center">
         <HBox
@@ -71,7 +90,6 @@
           alignItems="Center"
           width="calc(100% - 100px)"
           style="margin-left:50px; margin-right:50px">
-          <!-- Controller'dan dinamik eklenecek -->
         </HBox>
       </VBox>
     </HBox>

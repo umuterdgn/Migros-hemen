@@ -3,10 +3,14 @@ const mysql = require("mysql2");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-
+const multer = require("multer");
+const path = require("path");
 const app = express();
+
+
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); 
 // MySQL bağlantısı
 const db = mysql.createConnection({
   host: "localhost",
@@ -86,7 +90,18 @@ app.post("/api/auth/register", async (req, res) => {
 
 //burdan devam 
 
+// Görsellerin yükleneceği klasör ayarı
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/"); // uploads klasörüne kaydedecek
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname)); // eşsiz dosya ismi
+  }
+});
 
+const upload = multer({ storage: storage });
 // Tüm kategorileri getir
 app.get("/api/categories", (req, res) => {
     db.query("SELECT * FROM categories", (err, results) => {
@@ -181,34 +196,63 @@ app.delete("/api/products", (req, res) => {
   db.query("DELETE FROM products WHERE id=?", [id], (err, result) => {
     if (err) return res.status(500).json({ success: false, message: "Silme başarısız" });
     res.json({ success: true, message: "Ürün başarıyla silindi" });
+    
+
+    app.post("/api/uploads", upload.single("file"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: "Dosya yüklenemedi" });
+  }
+
+  const fileUrl = `/uploads/${req.file.filename}`;
+  res.status(200).json({ success: true, imageUrl: fileUrl });
+});
+
   });
 });
 // fotoğraf indirme için
-const multer = require("multer");
-const path = require("path");
+// const multer = require("multer");
+// const path = require("path");
 
 // Upload klasörü
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
-  },
-  filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname);
-    const fileName = Date.now() + ext;
-    cb(null, fileName);
-  }
-});
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, "uploads/");
+//   },
+//   filename: function (req, file, cb) {
+//     const ext = path.extname(file.originalname);
+//     const fileName = Date.now() + ext;
+//     cb(null, fileName);
+//   }
+// });
 
-const upload = multer({ storage: storage });
+// const upload = multer({ storage: storage });
 
-app.use("/uploads", express.static("uploads")); // resimlere dışarıdan erişim
+// app.use("/uploads", express.static("uploads")); // resimlere dışarıdan erişim
 
-// Görsel yükleme endpoint’i
-app.post("/api/upload", upload.single("image"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ success: false, message: "Dosya yok" });
-  }
+// // Görsel yükleme endpoint’i
+// app.post("/api/products", upload.single("image"), (req, res) => {
+//   const { ad, fiyat, stok, altkategori_id, indirim_turu, indirim_degeri } = req.body;
+//   const image_url = req.file ? `/uploads/${req.file.filename}` : null;
 
-  const fileUrl = `http://localhost:${PORT}/uploads/${req.file.filename}`;
-  res.status(200).json({ success: true, imageUrl: fileUrl });
-});
+//   if (!ad || !fiyat || !stok || !altkategori_id || !image_url) {
+//     return res.status(400).json({ message: "Lütfen tüm alanları doldurun." });
+//   }
+
+//   const sql = `
+//     INSERT INTO products (ad, fiyat, stok, image_url, altkategori_id, indirim_turu, indirim_degeri)
+//     VALUES (?, ?, ?, ?, ?, ?, ?)
+//   `;
+
+//   db.query(sql, [ad, fiyat, stok, image_url, altkategori_id, indirim_turu, indirim_degeri], (err, result) => {
+//     if (err) {
+//       console.error("Ürün eklenemedi:", err);
+//       return res.status(500).json({ message: "Sunucu hatası" });
+//     }
+
+//     res.json({ message: "Ürün başarıyla eklendi", productId: result.insertId });
+//   });
+
+
+//   const fileUrl = `http://localhost:${PORT}/uploads/${req.file.filename}`;
+//   res.status(200).json({ success: true, imageUrl: fileUrl });
+// });

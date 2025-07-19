@@ -19,25 +19,54 @@ sap.ui.define([
           image_url: "",
           discount_type: "none",
           discount_value: 0,
-          category: ""  // kategori adı - isteğe bağlı
+          category: ""
         },
         categories: [],
         subcategories: []
       });
-
       this.getView().setModel(oModel);
 
-      // Ajax ile kategorileri çek ve model at
       $.ajax({
         url: "http://localhost:8081/api/categories",
         method: "GET",
         success: function (data) {
           oModel.setProperty("/categories", data);
 
+          var oHBox = oController.byId("categoryContainer");
+          if (oHBox) {
+            oHBox.removeAllItems();
+
+            data.forEach(function (category) {
+              var oVBox = new sap.m.VBox({
+                width: "180px",
+                height: "180px",
+                alignItems: "Center",
+                justifyContent: "Center",
+                items: [
+                  new sap.m.Button({
+                    icon: "sap-icon://product",
+                    width: "120px",
+                    height: "120px",
+                    press: function () {
+                      var oRouter = sap.ui.core.UIComponent.getRouterFor(oController);
+                      oRouter.navTo("productRoute", {
+                        categoryId: category.id,
+                        categoryName: category.ad
+                      });
+                    }
+                  }),
+                  new sap.m.Text({
+                    text: category.ad,
+                    textAlign: "Center"
+                  })
+                ]
+              });
+              oHBox.addItem(oVBox);
+            });
+          }
+
           if (data.length > 0) {
-            // İlk kategoriyi seç ve modelde güncelle
             oModel.setProperty("/newProduct/kategori_id", data[0].id);
-            // İlk kategoriye ait alt kategorileri yükle
             oController.loadSubcategories(data[0].id);
           }
         },
@@ -49,19 +78,17 @@ sap.ui.define([
 
     loadSubcategories: function (categoryId) {
       var that = this;
-   
 
       $.ajax({
         url: `http://localhost:8081/api/getSubCategories?kategori=${categoryId}`,
         method: "GET",
         success: function (data) {
-             var oModel = that.getView().getModel();
+          var oModel = that.getView().getModel();
           oModel.setProperty("/subcategories", data);
-          // oModel.setProperty("/newProduct/subcategory_id", null); // sıfırla
         },
         error: function () {
           MessageToast.show("Alt kategoriler yüklenemedi");
-          oModel.setProperty("/subcategories", []);
+          that.getView().getModel().setProperty("/subcategories", []);
         }
       });
     },
@@ -70,9 +97,6 @@ sap.ui.define([
       var selectedItem = oEvent.getParameter("selectedItem");
       if (!selectedItem) return;
       var selectedKey = selectedItem.getKey();
-
-      var oModel = this.getView().getModel();
-      // oModel.setProperty("/newProduct/kategori_id", selectedKey);
 
       this.loadSubcategories(selectedKey);
     },
@@ -89,7 +113,6 @@ sap.ui.define([
       const oModel = this.getView().getModel();
       const newProduct = oModel.getProperty("/newProduct");
 
-      // zorunlu alanlar: ad(name), price, stock, kategori_id
       if (!newProduct.ad || !newProduct.price || !newProduct.stock || !newProduct.kategori_id) {
         MessageToast.show("Lütfen zorunlu alanları doldurun!");
         return;
@@ -106,21 +129,20 @@ sap.ui.define([
           subcategory_id: newProduct.subcategory_id,
           discount_type: newProduct.discount_type,
           discount_value: newProduct.discount_value,
-          category: newProduct.kategori_id // burası kategori id gönderiliyor backend tarafı ile uyumlu
+          category: newProduct.kategori_id
         })
       })
         .then(res => res.json())
         .then(data => {
           if (data.success) {
             MessageToast.show("Ürün başarıyla eklendi!");
-            // Modeli sıfırla, görsel yükleme hariç tut (image_url boşaltılabilir ya da kalabilir)
             oModel.setProperty("/newProduct", {
               kategori_id: null,
               subcategory_id: null,
               ad: "",
               price: "",
               stock: "",
-              image_url: "", // burada sıfırlamak veya korumak isteğe bağlı
+              image_url: "",
               discount_type: "none",
               discount_value: 0,
               category: ""
@@ -134,7 +156,6 @@ sap.ui.define([
         });
     },
 
-    // görsel yükleme işlemi aynen kalsın
     onDrop: function (oEvent) {
       oEvent.preventDefault();
       const oFile = oEvent.originalEvent.dataTransfer.files[0];
@@ -144,45 +165,76 @@ sap.ui.define([
       }
     },
 
-    onFileUploadClick: function () {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*";
-      input.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          this._uploadImage(file);
-        }
-      };
-      input.click();
+onUploadComplete: function (oEvent) {
+  const response = JSON.parse(oEvent.getParameter("responseRaw"));
+  const imageUrl = response.imageUrl;
+
+  const oModel = this.getView().getModel();
+  if (oModel) {
+    oModel.setProperty("/newProduct/image_url", imageUrl);
+  }
+
+  sap.m.MessageToast.show("Görsel başarıyla yüklendi!");
+},
+
+onFileChange: function (oEvent) {
+  const uploader = oEvent.getSource();
+  if (uploader && uploader.getValue()) {
+    uploader.upload();
+  }
+},
+
+//ürünleri listeleme fonksiyonu
+onShowAddProduct: function () {
+  this.byId("addProductPanel").setVisible(true);
+  this.byId("productListPanel").setVisible(false);
+},
+
+onShowProductList: function () {
+  this.byId("addProductPanel").setVisible(false);
+  this.byId("productListPanel").setVisible(true);
+  this.loadProductList(); // ürünleri getir
+},
+
+loadProductList: function () {
+  var oModel = this.getView().getModel();
+  
+  $.ajax({
+    url: "http://localhost:8081/api/products",
+    method: "GET",
+    success: function (data) {
+      oModel.setProperty("/productList", data);
     },
-
-    _uploadImage: function (file) {
-      const formData = new FormData();
-      formData.append("image", file);
-
-      fetch("http://localhost:8081/api/upload", {
-        method: "POST",
-        body: formData
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            const imageUrl = data.imageUrl;
-            this.getView().byId("previewImage").setSrc(imageUrl);
-            this.getView().byId("previewImage").setVisible(true);
-
-            // Görsel URL'sini modele kaydet
-            const oModel = this.getView().getModel();
-            const newProduct = oModel.getProperty("/newProduct");
-            newProduct.image_url = imageUrl;
-            oModel.setProperty("/newProduct", newProduct);
-          }
-        })
-        .catch((error) => {
-          console.error("Yükleme hatası:", error);
-        });
+    error: function () {
+      sap.m.MessageToast.show("Ürünler yüklenemedi.");
     }
+  });
+},
+
+onSearchProduct: function (oEvent) {
+  var sQuery = oEvent.getParameter("query").toLowerCase();
+  var oModel = this.getView().getModel();
+  var aProducts = oModel.getProperty("/productList") || [];
+  var aFiltered = aProducts.filter(p => p.name.toLowerCase().includes(sQuery));
+  oModel.setProperty("/productList", aFiltered);
+},
+
+onSortProduct: function (oEvent) {
+  var sKey = oEvent.getParameter("selectedItem").getKey();
+  var oModel = this.getView().getModel();
+  var aProducts = oModel.getProperty("/productList") || [];
+
+  aProducts.sort((a, b) => {
+    if (typeof a[sKey] === "string") {
+      return a[sKey].localeCompare(b[sKey]);
+    }
+    return a[sKey] - b[sKey];
+  });
+
+  oModel.setProperty("/productList", aProducts);
+}
+
 
   });
+  
 });
