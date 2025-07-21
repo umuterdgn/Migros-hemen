@@ -11,6 +11,7 @@ sap.ui.define([
       this.oRouter = this.getOwnerComponent().getRouter();
       this.oRouter.getRoute("productRoute").attachPatternMatched(this._onObjectMatched, this);
 
+      // Model'deki property isimlerini view bindinglerine göre ayarladım
       this.getView().setModel(new JSONModel({
         urunler: [],
         filtrelenmisUrunler: [],
@@ -18,9 +19,9 @@ sap.ui.define([
         categoryad: "",
         searchQuery: "",
         selectedSort: "",
-        page: 1,
+        currentPage: 1,
         pageSize: 30,
-        hasNextPage: false
+        hasMorePages: false
       }), "view");
     },
 
@@ -32,16 +33,16 @@ sap.ui.define([
       this.getAltKategoriler(categoryId);
     },
 
-    getUrunler: function (kategoriID) {
+    getUrunler: function (categoryId) {
       const that = this;
       $.ajax({
-        url: `http://localhost:8081/api/products-category/${kategoriID}`,
+        url: `http://localhost:8081/api/products?categoryId=${categoryId}`,
         method: "GET",
         dataType: "json",
         success: function (data) {
           const model = that.getView().getModel("view");
           model.setProperty("/urunler", data);
-          model.setProperty("/page", 1);
+          model.setProperty("/currentPage", 1);
           that._applyFilterSortPage();
         },
         error: function (xhr, status, error) {
@@ -67,93 +68,85 @@ sap.ui.define([
     },
 
     onAltKategoriSecildi: function (oEvent) {
-      const selectedId = oEvent.getSource().getBindingContext("view").getObject().id;
-      const that = this;
+      const selectedSubCat = oEvent.getSource().getBindingContext("view").getObject();
+      const model = this.getView().getModel("view");
+      const allProducts = model.getProperty("/urunler");
 
-      $.ajax({
-        url: `http://localhost:8081/api/products?subcategory_id=${selectedId}`,
-        method: "GET",
-        dataType: "json",
-        success: function (data) {
-          const model = that.getView().getModel("view");
-          model.setProperty("/urunler", data);
-          model.setProperty("/page", 1);
-          that._applyFilterSortPage();
-        },
-        error: function (xhr, status, error) {
-          console.error("Alt kategori ürünleri alınamadı:", error);
-        }
-      });
+      // Alt kategoriye göre filtreleme
+      const filtered = allProducts.filter(p => p.subcategory_id === selectedSubCat.id);
+
+      model.setProperty("/filtrelenmisUrunler", filtered);
+      model.setProperty("/currentPage", 1);
+      model.setProperty("/hasMorePages", false);  // Sayfalama kapalı burada
     },
 
-   onSearch: function (oEvent) {
-  const query = oEvent.getSource().getValue().toLowerCase();
-  const model = this.getView().getModel("view");
-  model.setProperty("/searchQuery", query); // Bunu ekle
-  this._applyFilterSortPage();
-},
-
-
+    onSearch: function (oEvent) {
+      const query = oEvent.getSource().getValue().toLowerCase();
+      const model = this.getView().getModel("view");
+      model.setProperty("/searchQuery", query);
+      model.setProperty("/currentPage", 1);
+      this._applyFilterSortPage();
+    },
 
     onSortChange: function (oEvent) {
       const sortKey = oEvent.getSource().getSelectedKey();
       const model = this.getView().getModel("view");
       model.setProperty("/selectedSort", sortKey);
-      model.setProperty("/page", 1);
+      model.setProperty("/currentPage", 1);
       this._applyFilterSortPage();
     },
 
     onNextPage: function () {
       const model = this.getView().getModel("view");
-      const currentPage = model.getProperty("/page");
-      if (model.getProperty("/hasNextPage")) {
-        model.setProperty("/page", currentPage + 1);
+      const currentPage = model.getProperty("/currentPage");
+      if (model.getProperty("/hasMorePages")) {
+        model.setProperty("/currentPage", currentPage + 1);
         this._applyFilterSortPage();
       }
     },
 
-    onPreviousPage: function () {
+    onPrevPage: function () {
       const model = this.getView().getModel("view");
-      const currentPage = model.getProperty("/page");
+      const currentPage = model.getProperty("/currentPage");
       if (currentPage > 1) {
-        model.setProperty("/page", currentPage - 1);
+        model.setProperty("/currentPage", currentPage - 1);
         this._applyFilterSortPage();
       }
     },
 
-    onSepeteEkle: function (oEvent) {
+    onAddToCart: function (oEvent) {
       const product = oEvent.getSource().getBindingContext("view").getObject();
       MessageToast.show(product.ad + " sepete eklendi!");
     },
 
     _applyFilterSortPage: function () {
-  const model = this.getView().getModel("view");
-  const urunler = model.getProperty("/urunler") || [];
-  const query = (model.getProperty("/searchQuery") || "").toLowerCase();
-  const sortKey = model.getProperty("/selectedSort");
-  const page = model.getProperty("/page");
-  const pageSize = model.getProperty("/pageSize");
+      const model = this.getView().getModel("view");
+      const urunler = model.getProperty("/urunler") || [];
+      const query = (model.getProperty("/searchQuery") || "").toLowerCase();
+      const sortKey = model.getProperty("/selectedSort");
+      const page = model.getProperty("/currentPage");
+      const pageSize = model.getProperty("/pageSize");
 
-  // Filtreleme
-  let filtered = urunler.filter(u => u.ad && u.ad.toLowerCase().includes(query));
+      // Filtreleme
+      let filtered = urunler.filter(u => u.ad && u.ad.toLowerCase().includes(query));
 
-  // Sıralama
-  if (sortKey === "asc") {
-    filtered.sort((a, b) => a.fiyat - b.fiyat);
-  } else if (sortKey === "desc") {
-    filtered.sort((a, b) => b.fiyat - a.fiyat);
-  }
+      // Sıralama
+      if (sortKey === "asc") {
+        filtered.sort((a, b) => a.fiyat - b.fiyat);
+      } else if (sortKey === "desc") {
+        filtered.sort((a, b) => b.fiyat - a.fiyat);
+      }
 
-  // Sayfalama
-  const start = (page - 1) * pageSize;
-  const end = start + pageSize;
-  const pagedItems = filtered.slice(start, end);
+      // Sayfalama
+      const start = (page - 1) * pageSize;
+      const end = start + pageSize;
+      const pagedItems = filtered.slice(start, end);
 
-  model.setProperty("/filtrelenmisUrunler", pagedItems);
+      model.setProperty("/filtrelenmisUrunler", pagedItems);
 
-  // Sonraki sayfa var mı?
-  model.setProperty("/hasNextPage", end < filtered.length);
-}
+      // Sonraki sayfa var mı?
+      model.setProperty("/hasMorePages", end < filtered.length);
+    }
 
   });
 });

@@ -138,25 +138,28 @@ app.get("/api/products", (req, res) => {
 });
 
 // Kategoriye ait tüm ürünler (alt kategorileri de dahil)
-app.get("/api/products-category/:categoryId", (req, res) => {
-  const categoryId = req.params.categoryId;
+app.get("/api/products-category", (req, res) => {
+  const categoryId = req.query.categoryId;  // query'den alıyoruz
+
+  if (!categoryId) {
+    return res.status(400).json({ message: "categoryId query parametresi gerekli" });
+  }
 
   const sql = `
-    SELECT p.*
-    FROM products p
-    JOIN subcategories s ON p.subcategory_id = s.id
-    WHERE s.kategori_id = ?
+    SELECT * FROM products
+    WHERE category = ?
   `;
 
   db.query(sql, [categoryId], (err, results) => {
     if (err) {
-      console.error("Kategoriye ait ürünler alınamadı:", err);
-      return res.status(500).json({ success: false, message: "Ürünler alınamadı" });
+      console.error("Veritabanı hatası:", err);
+      return res.status(500).json({ error: "Veritabanı hatası" });
     }
     res.json(results);
   });
 });
-//ürün ekleme 
+
+//ürün ekleme
 app.post("/api/products", (req, res) => {
   const { name, price, stock, base64, subcategory_id, discount_type, discount_value, category } = req.body;
 

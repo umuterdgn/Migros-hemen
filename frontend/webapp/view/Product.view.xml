@@ -9,69 +9,85 @@
     <!-- Sol Panel (Alt Kategoriler) -->
     <VBox width="25%" class="sapUiSmallMargin">
       <Text
-        text="Kategori: {/view/categoryad}"
+        text="{view>/categoryad}"
         class="sapUiSmallMarginBottom sapUiMediumMarginTop sapUiTinyMarginBegin" />
-      
+
       <List
         headerText="Alt Kategoriler"
         items="{view>/altKategoriler}"
         itemPress=".onAltKategoriSecildi">
-        <StandardListItem title="{view>ad}" />
+        <StandardListItem title="{view>ad}" type="Active" />
       </List>
     </VBox>
 
     <!-- Sağ Panel (Ürünler) -->
     <VBox width="75%" class="sapUiSmallMargin">
-      <SearchField
-        placeholder="Ürün Ara..."
-        liveChange=".onSearch"
-        class="sapUiSmallMarginBottom" />
+      <HBox justifyContent="SpaceBetween" class="sapUiSmallMarginBottom">
+        <SearchField
+          placeholder="Ürün Ara..."
+          liveChange=".onSearch"
+          width="60%" />
 
-      <Select
-        change=".onSortChange"
-        selectedKey="{view>/selectedSort}"
-        class="sapUiSmallMarginBottom"
-        width="200px">
-        <items>
-          <core:Item key="" text="Sıralama Yok" />
-          <core:Item key="asc" text="Fiyat Artan" />
-          <core:Item key="desc" text="Fiyat Azalan" />
-        </items>
-      </Select>
+        <Select
+          change=".onSortChange"
+          selectedKey="{view>/selectedSort}">
+          <items>
+            <core:Item key="" text="Sıralama Yok" />
+            <core:Item key="asc" text="Fiyat Artan" />
+            <core:Item key="desc" text="Fiyat Azalan" />
+          </items>
+        </Select>
+      </HBox>
 
-      <!-- Ürünler Grid -->
+      <!-- Ürün Kartları -->
       <FlexBox
-  wrap="Wrap"
-  justifyContent="Start"
-  alignItems="Start"
-  renderType="Bare"
-  width="100%"
-  items="{view>/products}">
-  
-  <VBox width="18%" class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
-    <Image src="{view>image_url}" width="80px" height="80px" class="sapUiTinyMarginBottom" />
-    <Text text="{view>ad}" class="sapUiSmallMarginBottom" />
-    <Text text="{= '₺' + ${view>fiyat} }" class="sapUiSmallMarginBottom" />
-    <Button text="Sepete Ekle" press=".onSepeteEkle" />
-  </VBox>
-</FlexBox>
+        wrap="Wrap"
+        justifyContent="Start"
+        items="{view>/filtrelenmisUrunler}">
 
+        <items>
+          <VBox
+            width="22%"
+            class="sapUiSmallMargin"
+            style="border: 1px solid #ccc; border-radius: 8px; padding: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background-color: white;">
 
-      <!-- Sayfa Değiştirme Butonları -->
-      <HBox justifyContent="Center" class="sapUiSmallMarginTop" width="100%">
-        <Button
-          text="Önceki"
-          press=".onPreviousPage"
-          enabled="{= ${view>/page} > 1}" />
-        <Text
-          text="{= 'Sayfa ' + ${view>/page}}"
-          class="sapUiSmallMarginLeft sapUiSmallMarginRight"
-          textAlign="Center"
-          width="100px" />
-        <Button
-          text="Sonraki"
-          press=".onNextPage"
-          enabled="{view>/hasNextPage}" />
+            <Image
+              src="{view>image_url}"
+              width="100%"
+              height="150px"
+              decorative="false"
+              tooltip="{view>ad}" />
+
+            <Text
+              text="{view>ad}"
+              class="sapUiTinyMarginTop sapUiTinyMarginBottom"
+              wrapping="true"
+              textAlign="Center"
+              design="Bold" />
+
+            <Text
+              text="{view>fiyat} ₺"
+              class="sapUiTinyMarginBottom"
+              textAlign="Center"
+              design="Bold" />
+
+            <Button
+              text="Sepete Ekle"
+              icon="sap-icon://cart"
+              type="Emphasized"
+              width="100%"
+              press=".onAddToCart" />
+
+          </VBox>
+        </items>
+
+      </FlexBox>
+
+      <!-- Sayfalama -->
+      <HBox alignItems="Center" justifyContent="Center" class="sapUiSmallMarginTop">
+        <Button text="⟨ Geri" press=".onPrevPage" enabled="{= ${view>/currentPage} > 1 }" />
+        <Text text="Sayfa: {view>/currentPage}" class="sapUiTinyMargin sapUiMediumMarginBegin sapUiMediumMarginEnd" />
+        <Button text="İleri ⟩" press=".onNextPage" enabled="{= ${view>/hasMorePages} }" />
       </HBox>
     </VBox>
   </HBox>
