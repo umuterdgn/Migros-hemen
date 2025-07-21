@@ -6,11 +6,20 @@ const bcrypt = require("bcrypt");
 const multer = require("multer");
 const path = require("path");
 const app = express();
-
-
+const fs = require("fs");
+const { v4: uuidv4 } = require("uuid");
+const { log } = require("console");
+const bodyParser = require('body-parser');
+ 
 app.use(cors());
-app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); 
+app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ limit: '20mb', extended: true }));
+// app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); 
+// JSON tipinde gelen body'yi ayrıştırır
+app.use(bodyParser.json());
+
+// URL encoded (form verisi gibi) body'yi ayrıştırır
+app.use(bodyParser.urlencoded({ extended: true }));
 // MySQL bağlantısı
 const db = mysql.createConnection({
   host: "localhost",
@@ -91,17 +100,17 @@ app.post("/api/auth/register", async (req, res) => {
 //burdan devam 
 
 // Görsellerin yükleneceği klasör ayarı
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/"); // uploads klasörüne kaydedecek
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname)); // eşsiz dosya ismi
-  }
-});
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, "uploads/"); // uploads klasörüne kaydedecek
+//   },
+//   filename: function (req, file, cb) {
+//     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1E9);
+//     cb(null, uniqueSuffix + path.extname(file.originalname)); // eşsiz dosya ismi
+//   }
+// });
 
-const upload = multer({ storage: storage });
+// const upload = multer({ storage: storage });
 // Tüm kategorileri getir
 app.get("/api/categories", (req, res) => {
     db.query("SELECT * FROM categories", (err, results) => {
@@ -121,39 +130,46 @@ app.get("/api/getSubCategories", (req, res) => {
 });
 
 app.get("/api/products", (req, res) => {
-    const { subcategory_id } = req.query;
-    db.query("SELECT * FROM products WHERE subcategory_id = ?", [subcategory_id], (err, results) => {
+    // const { subcategory_id } = req.query;
+    db.query("SELECT * FROM products", (err, results) => {
         if (err) return res.status(500).json(err);
         res.json(results);
     });
 });
 
 // Kategoriye ait tüm ürünler (alt kategorileri de dahil)
-app.get("/api/category-products/:categoryId", (req, res) => {
-    const { categoryId } = req.params;
-    db.query(`
-        SELECT p.* FROM products p 
-        JOIN subcategories s ON p.subcategory_id = s.id
-        WHERE s.kategori_id = ?
-    `, [categoryId], (err, results) => {
-        if (err) return res.status(500).json(err);
-        res.json(results);
-    });
+app.get("/api/products-category/:categoryId", (req, res) => {
+  const categoryId = req.params.categoryId;
+
+  const sql = `
+    SELECT p.*
+    FROM products p
+    JOIN subcategories s ON p.subcategory_id = s.id
+    WHERE s.kategori_id = ?
+  `;
+
+  db.query(sql, [categoryId], (err, results) => {
+    if (err) {
+      console.error("Kategoriye ait ürünler alınamadı:", err);
+      return res.status(500).json({ success: false, message: "Ürünler alınamadı" });
+    }
+    res.json(results);
+  });
 });
 //ürün ekleme 
 app.post("/api/products", (req, res) => {
-  const { name, price, stock, image_url, subcategory_id, discount_type, discount_value, category } = req.body;
+  const { name, price, stock, base64, subcategory_id, discount_type, discount_value, category } = req.body;
 
   if (!name || !price || !stock || !category) {
     return res.status(400).json({ success: false, message: "Eksik bilgi var." });
   }
 
   const sql = `
-    INSERT INTO products (name, price, stock, image_url, subcategory_id, discount_type, discount_value, category)
+    INSERT INTO products (name, price, stock, base64, subcategory_id, discount_type, discount_value, category)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
-  db.query(sql, [name, price, stock, image_url, subcategory_id, discount_type, discount_value, category], (err, result) => {
+  db.query(sql, [name, price, stock, base64, subcategory_id, discount_type, discount_value, category], (err, result) => {
     if (err) {
       console.error("Ürün ekleme hatası:", err); // Hata detayını konsola yazdır
       return res.status(500).json({ success: false, message: "Ürün eklenemedi", error: err.message });
@@ -209,6 +225,53 @@ app.delete("/api/products", (req, res) => {
 
   });
 });
+
+app.use(express.json({ limit: '50mb' }));  // veya daha fazlası: '20mb'
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+
+
+
+
+
+
+app.post("/api/addProduct", (req, res) => {
+  
+     const { name, price, stock, base64, subcategory_id, discount_type, discount_value, category } = req.body;
+
+  if (!name || !price || !stock || !category) {
+    return res.status(400).json({ success: false, message: "Eksik bilgi var." });
+  }
+
+  const sql = `
+    INSERT INTO products (name, price, stock, base64, subcategory_id, discount_type, discount_value, category)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `;
+
+  db.query(sql, [name, price, stock, base64, subcategory_id, discount_type, discount_value, category], (err, result) => {
+    if (err) {
+      console.error("Ürün ekleme hatası:", err); // Hata detayını konsola yazdır
+      return res.status(500).json({ success: false, message: "Ürün eklenemedi", error: err.message });
+    }
+    res.status(201).json({ success: true, message: "Ürün başarıyla eklendi", productId: result.insertId });
+  });
+     });
+   
+
+  // const buffer = Buffer.from(file, "base64"); // base64'ü binary veriye dönüştür
+  // const filename = uuidv4() + ".png"; // benzersiz isim
+  // const filePath = path.join(__dirname, "uploads", filename);
+
+  // fs.writeFile(filePath, buffer, (err) => {
+  //   if (err) {
+  //     console.error("Dosya yazma hatası:", err);
+  //     return res.status(500).json({ success: false, message: "Dosya kaydedilemedi" });
+  //   }
+
+  //   const imageUrl = `/image_url/${filename}`; // veritabanında saklanacak yol
+  //   return res.status(200).json({ success: true, imageUrl }); // UI5 bu URL'yi kullanarak image_url olarak set ediyor
+  // });
+ 
 // fotoğraf indirme için
 // const multer = require("multer");
 // const path = require("path");

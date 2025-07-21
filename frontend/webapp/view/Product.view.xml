@@ -8,7 +8,9 @@
   <HBox width="100%">
     <!-- Sol Panel (Alt Kategoriler) -->
     <VBox width="25%" class="sapUiSmallMargin">
-      <Text text="Kategori: {/view/categoryad}" class="sapUiSmallMarginBottom sapUiMediumMarginTop sapUiTinyMarginBegin" />
+      <Text
+        text="Kategori: {/view/categoryad}"
+        class="sapUiSmallMarginBottom sapUiMediumMarginTop sapUiTinyMarginBegin" />
       
       <List
         headerText="Alt Kategoriler"
@@ -27,7 +29,9 @@
 
       <Select
         change=".onSortChange"
-        selectedKey="{view>/selectedSort}">
+        selectedKey="{view>/selectedSort}"
+        class="sapUiSmallMarginBottom"
+        width="200px">
         <items>
           <core:Item key="" text="Sıralama Yok" />
           <core:Item key="asc" text="Fiyat Artan" />
@@ -35,13 +39,40 @@
         </items>
       </Select>
 
-      <List
-        headerText="Ürünler"
-        items="{view>/filtrelenmisUrunler}">
-        <StandardListItem
-          title="{view>ad}"
-          description="{view>fiyat}" />
-      </List>
+      <!-- Ürünler Grid -->
+      <FlexBox
+  wrap="Wrap"
+  justifyContent="Start"
+  alignItems="Start"
+  renderType="Bare"
+  width="100%"
+  items="{view>/products}">
+  
+  <VBox width="18%" class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+    <Image src="{view>image_url}" width="80px" height="80px" class="sapUiTinyMarginBottom" />
+    <Text text="{view>ad}" class="sapUiSmallMarginBottom" />
+    <Text text="{= '₺' + ${view>fiyat} }" class="sapUiSmallMarginBottom" />
+    <Button text="Sepete Ekle" press=".onSepeteEkle" />
+  </VBox>
+</FlexBox>
+
+
+      <!-- Sayfa Değiştirme Butonları -->
+      <HBox justifyContent="Center" class="sapUiSmallMarginTop" width="100%">
+        <Button
+          text="Önceki"
+          press=".onPreviousPage"
+          enabled="{= ${view>/page} > 1}" />
+        <Text
+          text="{= 'Sayfa ' + ${view>/page}}"
+          class="sapUiSmallMarginLeft sapUiSmallMarginRight"
+          textAlign="Center"
+          width="100px" />
+        <Button
+          text="Sonraki"
+          press=".onNextPage"
+          enabled="{view>/hasNextPage}" />
+      </HBox>
     </VBox>
   </HBox>
 </mvc:View>

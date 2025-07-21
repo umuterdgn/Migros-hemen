@@ -41,22 +41,10 @@
             <Input placeholder="Stok" type="Number" value="{/newProduct/stock}" width="300px" />
             <Input placeholder="İndirim Tipi (none/percent/amount)" value="{/newProduct/discount_type}" width="300px" />
             <Input placeholder="İndirim Değeri" type="Number" value="{/newProduct/discount_value}" width="300px" />
-
+<!-- görsel ekleme -->
             <unified:FileUploader
-              id="fileUploader"
-              name="image"
-              uploadUrl="http://localhost:8081/api/uploads"
-              tooltip="Görsel yükle"
-              uploadOnChange="true"
-              buttonOnly="true"
-              fileType="jpg,png,jpeg"
-              change="onFileChange"
-              uploadComplete="onUploadComplete"
-              maximumFileSize="5"
-              style="Emphasized"
-              fileName="{/newProduct/image_url}"
-              mimeType="image/png,image/jpeg" />
-
+              id="fileUploaderUpd" change="uploadFileForProduct"
+              uploadUrl="" uploadComplete="onFileUploadComplete"/>
             <Image id="previewImage" visible="false" width="200px" height="auto" />
 
             <Button text="Ürün Ekle" press="onUrunEkle" type="Emphasized" />
