@@ -356,3 +356,16 @@
 .dropArea.dragover {
   background-color: #d0eaff;
 }
+.sapUiSmallMargin > .sapMFlexItem {
+  margin: 8px !important;
+}
+
+.productPanel {
+  box-shadow: 0 0 4px rgba(0,0,0,0.15);
+  border-radius: 4px;
+}
+
+.priceText {
+  font-size: 1.2rem;
+  font-weight: bold;
+}

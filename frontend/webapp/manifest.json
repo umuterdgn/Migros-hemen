@@ -40,6 +40,7 @@
               "sap.ui.core": {},
               "sap.m": {},
               "sap.tnt": {}
+              
           }
       },
       "models": {
@@ -113,7 +114,7 @@
                     "login": {
                     "viewName": "Login",
                     "viewPath": "migros.view",
-                    "viewLevel": 1
+                    "viewLevel": 0
                 },
                     "register": {
                     "viewName": "Register",

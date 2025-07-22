@@ -236,8 +236,6 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 
 
-
-
 app.post("/api/addProduct", (req, res) => {
   
      const { name, price, stock, base64, subcategory_id, discount_type, discount_value, category } = req.body;

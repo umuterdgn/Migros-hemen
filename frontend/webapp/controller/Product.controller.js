@@ -1,152 +1,233 @@
-sap.ui.define([
-  "sap/ui/core/mvc/Controller",
-  "sap/ui/model/json/JSONModel",
-  "sap/m/MessageToast"
-], function (Controller, JSONModel, MessageToast) {
-  "use strict";
+sap.ui.define(
+  [
+    "sap/ui/core/mvc/Controller",
+    "sap/ui/model/json/JSONModel",
+    "sap/m/MessageToast",
+    "sap/ui/model/Sorter",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator",
+  ],
+  function (
+    Controller,
+    JSONModel,
+    MessageToast,
+    Sorter,
+    Filter,
+    FilterOperator
+  ) {
+    "use strict";
 
-  return Controller.extend("migros.controller.Product", {
+    return Controller.extend("migros.controller.Product", {
+      onInit: function () {
+        this.oRouter = this.getOwnerComponent().getRouter();
+        this.oRouter
+          .getRoute("productRoute")
+          .attachPatternMatched(this._onObjectMatched, this);
 
-    onInit: function () {
-      this.oRouter = this.getOwnerComponent().getRouter();
-      this.oRouter.getRoute("productRoute").attachPatternMatched(this._onObjectMatched, this);
+        this.oModel = new JSONModel({
+          view: {},
+          subcategories: [],
+          UrunList: [],
+          filteredProducts: [],
+          displayedProducts: [],
+          pagination: {
+            currentPage: 1,
+            totalPages: 1,
+            itemsPerPage: 30,
+            hasNext: false,
+            hasPrev: false,
+          },
+        });
+        this.getView().setModel(this.oModel);
+      },
 
-      // Model'deki property isimlerini view bindinglerine göre ayarladım
-      this.getView().setModel(new JSONModel({
-        urunler: [],
-        filtrelenmisUrunler: [],
-        altKategoriler: [],
-        categoryad: "",
-        searchQuery: "",
-        selectedSort: "",
-        currentPage: 1,
-        pageSize: 30,
-        hasMorePages: false
-      }), "view");
-    },
+      _onObjectMatched: function (oEvent) {
+        const categoryId = oEvent.getParameter("arguments").categoryId;
+        const categoryName = oEvent.getParameter("arguments").categoryName;
+        this.oModel.setProperty("/view/categoryad", categoryName);
+        this._loadSubcategories(categoryId);
+        this._loadProductsByCategory(categoryId);
+      },
 
-    _onObjectMatched: function (oEvent) {
-      const categoryId = oEvent.getParameter("arguments").categoryId;
-      this.kategoriID = categoryId;
+      _loadSubcategories: function (categoryId) {
+        $.get(
+          `http://localhost:8081/api/getSubCategories?kategori=${categoryId}`,
+          (data) => {
+            this.oModel.setProperty("/subcategories", data);
+            this._bindSubcategories();
+          }
+        );
+      },
 
-      this.getUrunler(categoryId);
-      this.getAltKategoriler(categoryId);
-    },
+      _bindSubcategories: function () {
+        const oList = this.byId("subCategoryList");
+        const data = this.oModel.getProperty("/subcategories");
 
-    getUrunler: function (categoryId) {
-      const that = this;
-      $.ajax({
-        url: `http://localhost:8081/api/products?categoryId=${categoryId}`,
-        method: "GET",
-        dataType: "json",
-        success: function (data) {
-          const model = that.getView().getModel("view");
-          model.setProperty("/urunler", data);
-          model.setProperty("/currentPage", 1);
-          that._applyFilterSortPage();
-        },
-        error: function (xhr, status, error) {
-          console.error("Ürünler alınamadı:", error);
+        oList.removeAllItems();
+        data.forEach((sub) => {
+          oList.addItem(
+            new sap.m.StandardListItem({
+              title: sub.ad,
+              customData: [
+                new sap.ui.core.CustomData({ key: "id", value: sub.id }),
+              ],
+            })
+          );
+        });
+      },
+
+      _loadProductsByCategory: function (categoryId) {
+        var that = this;
+        // $.get(
+        //   `http://localhost:8081/api/products-category?categoryId=${categoryId}`,
+        //   (data) => {
+        $.ajax({
+          url:
+            "http://localhost:8081/api/products-category?categoryId=" + (categoryId),
+          dataType: "json",
+          method: "GET",
+         success: function (data) {
+  for (var i = 0; i < data.length; i++) {
+    data[i].src = "data:image/jpeg;base64," + atob(unescape(decodeURIComponent( data[i].base64)));
+
+    // BURAYA YAZ
+    console.log(data[i].src);
+  }
+
+  var oModel = new JSONModel();
+  oModel.setData(data);
+  that.getOwnerComponent().setModel(oModel, "UrunList");
+  that.getOwnerComponent().getModel("UrunList").refresh();
+  that.oModel.setProperty("/UrunList", data);
+  that._applyFilters();
+}
+
+        });
+      },
+
+      onSubCategorySelect: function (oEvent) {
+        const selectedItem = oEvent.getParameter("listItem");
+        const subCatId = selectedItem.getCustomData()[0].getValue();
+        const UrunList = this.oModel.getProperty("/UrunList");
+        const filtered = UrunList.filter(
+          (p) => p.subcategory_id == subCatId
+        );
+        this.oModel.setProperty("/filteredProducts", filtered);
+        this._paginate(1);
+      },
+
+      onSearch: function (oEvent) {
+        const query = oEvent.getParameter("newValue").toLowerCase();
+        const filtered = this.oModel
+          .getProperty("/UrunList")
+          .filter((p) => p.name.toLowerCase().includes(query));
+        this.oModel.setProperty("/filteredProducts", filtered);
+        this._paginate(1);
+      },
+
+      onSortChange: function (oEvent) {
+        const key = oEvent.getParameter("selectedItem").getKey();
+        let sorted = [...this.oModel.getProperty("/filteredProducts")];
+
+        switch (key) {
+          case "priceAsc":
+            sorted.sort((a, b) => a.price - b.price);
+            break;
+          case "priceDesc":
+            sorted.sort((a, b) => b.price - a.price);
+            break;
+          case "discountAsc":
+            sorted.sort((a, b) => a.discount_value - b.discount_value);
+            break;
+          case "discountDesc":
+            sorted.sort((a, b) => b.discount_value - a.discount_value);
+            break;
+          case "nameAsc":
+            sorted.sort((a, b) => a.name.localeCompare(b.name));
+            break;
+          case "nameDesc":
+            sorted.sort((a, b) => b.name.localeCompare(a.name));
+            break;
         }
-      });
-    },
 
-    getAltKategoriler: function (kategoriID) {
-      const that = this;
-      $.ajax({
-        url: `http://localhost:8081/api/getSubCategories?kategori=${kategoriID}`,
-        method: "GET",
-        dataType: "json",
-        success: function (data) {
-          const model = that.getView().getModel("view");
-          model.setProperty("/altKategoriler", data);
-        },
-        error: function (xhr, status, error) {
-          console.error("Alt kategoriler alınamadı:", error);
-        }
-      });
-    },
+        this.oModel.setProperty("/filteredProducts", sorted);
+        this._paginate(1);
+      },
 
-    onAltKategoriSecildi: function (oEvent) {
-      const selectedSubCat = oEvent.getSource().getBindingContext("view").getObject();
-      const model = this.getView().getModel("view");
-      const allProducts = model.getProperty("/urunler");
+      _applyFilters: function () {
+        const products = this.oModel.getProperty("/UrunList");
+        this.oModel.setProperty("/filteredProducts", products);
+        this._paginate(1);
+      },
 
-      // Alt kategoriye göre filtreleme
-      const filtered = allProducts.filter(p => p.subcategory_id === selectedSubCat.id);
+      _paginate: function (page) {
+        const all = this.oModel.getProperty("/filteredProducts");
+        const perPage = this.oModel.getProperty("/pagination/itemsPerPage");
+        const totalPages = Math.ceil(all.length / perPage);
 
-      model.setProperty("/filtrelenmisUrunler", filtered);
-      model.setProperty("/currentPage", 1);
-      model.setProperty("/hasMorePages", false);  // Sayfalama kapalı burada
-    },
+        const start = (page - 1) * perPage;
+        const pageItems = all.slice(start, start + perPage);
 
-    onSearch: function (oEvent) {
-      const query = oEvent.getSource().getValue().toLowerCase();
-      const model = this.getView().getModel("view");
-      model.setProperty("/searchQuery", query);
-      model.setProperty("/currentPage", 1);
-      this._applyFilterSortPage();
-    },
+        this.oModel.setProperty("/pagination/currentPage", page);
+        this.oModel.setProperty("/pagination/totalPages", totalPages);
+        this.oModel.setProperty("/pagination/hasNext", page < totalPages);
+        this.oModel.setProperty("/pagination/hasPrev", page > 1);
+        this.oModel.setProperty("/displayedProducts", pageItems);
 
-    onSortChange: function (oEvent) {
-      const sortKey = oEvent.getSource().getSelectedKey();
-      const model = this.getView().getModel("view");
-      model.setProperty("/selectedSort", sortKey);
-      model.setProperty("/currentPage", 1);
-      this._applyFilterSortPage();
-    },
+        this._renderProducts(pageItems);
+      },
 
-    onNextPage: function () {
-      const model = this.getView().getModel("view");
-      const currentPage = model.getProperty("/currentPage");
-      if (model.getProperty("/hasMorePages")) {
-        model.setProperty("/currentPage", currentPage + 1);
-        this._applyFilterSortPage();
-      }
-    },
+      _renderProducts: function (items) {
+        const oBox = this.byId("UrunList");
+        oBox.removeAllItems();
 
-    onPrevPage: function () {
-      const model = this.getView().getModel("view");
-      const currentPage = model.getProperty("/currentPage");
-      if (currentPage > 1) {
-        model.setProperty("/currentPage", currentPage - 1);
-        this._applyFilterSortPage();
-      }
-    },
+        items.forEach((product) => {
+          const discount =
+            product.discount_type === "rate"
+              ? (product.price * (1 - product.discount_value / 100)).toFixed(2)
+              : (product.price - product.discount_value).toFixed(2);
 
-    onAddToCart: function (oEvent) {
-      const product = oEvent.getSource().getBindingContext("view").getObject();
-      MessageToast.show(product.ad + " sepete eklendi!");
-    },
+          const card = new sap.m.VBox({
+            width: "180px",
+            height: "340px",
+            border: "30px",
+            alignItems: "Center",
+            justifyContent: "Start",
+            items: [
+              new sap.m.Image({
+                src: product.src,
+                width: "160px",
+                height: "140px",
+              }),
+              new sap.m.Text({ text: product.name, wrapping: true }),
+              new sap.m.Text({ text: "Fiyat: " + product.price + " ₺" }),
+              new sap.m.Text({
+                text: "İndirimli: " + discount + " ₺",
+                visible: product.discount_value > 0,
+              }),
+              new sap.m.Button({
+                text: "Sepete Ekle",
+                icon: "sap-icon://cart",
+                press: () =>
+                  MessageToast.show(product.name + " sepete eklendi"),
+              }),
+            ],
+          }).addStyleClass("sapUiSmallMargin productBox");
 
-    _applyFilterSortPage: function () {
-      const model = this.getView().getModel("view");
-      const urunler = model.getProperty("/urunler") || [];
-      const query = (model.getProperty("/searchQuery") || "").toLowerCase();
-      const sortKey = model.getProperty("/selectedSort");
-      const page = model.getProperty("/currentPage");
-      const pageSize = model.getProperty("/pageSize");
 
-      // Filtreleme
-      let filtered = urunler.filter(u => u.ad && u.ad.toLowerCase().includes(query));
+          oBox.addItem(card);
+        });
+      },
 
-      // Sıralama
-      if (sortKey === "asc") {
-        filtered.sort((a, b) => a.fiyat - b.fiyat);
-      } else if (sortKey === "desc") {
-        filtered.sort((a, b) => b.fiyat - a.fiyat);
-      }
+      onNextPage: function () {
+        const page = this.oModel.getProperty("/pagination/currentPage");
+        this._paginate(page + 1);
+      },
 
-      // Sayfalama
-      const start = (page - 1) * pageSize;
-      const end = start + pageSize;
-      const pagedItems = filtered.slice(start, end);
-
-      model.setProperty("/filtrelenmisUrunler", pagedItems);
-
-      // Sonraki sayfa var mı?
-      model.setProperty("/hasMorePages", end < filtered.length);
-    }
-
-  });
-});
+      onPrevPage: function () {
+        const page = this.oModel.getProperty("/pagination/currentPage");
+        this._paginate(page - 1);
+      },
+    });
+  }
+);
