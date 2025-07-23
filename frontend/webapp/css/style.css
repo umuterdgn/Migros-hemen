@@ -358,6 +358,7 @@
 }
 .sapUiSmallMargin > .sapMFlexItem {
   margin: 8px !important;
+  border-radius: 8px;
 }
 
 .productPanel {
@@ -368,4 +369,235 @@
 .priceText {
   font-size: 1.2rem;
   font-weight: bold;
+}
+
+
+.productBox {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 340px;
+  width: 180px;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.05);
+  margin: 8px;
+  background-color: white;
+}
+
+.productBox img {
+  transition: transform 0.3s ease;
+}
+
+.productBox img:hover {
+  transform: scale(1.1);
+}
+
+.productBox .productName {
+  margin-top: 12px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.productBox .priceBox {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.productBox .newPrice {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-left: 8px;
+}
+
+.productBox .oldPrice {
+  text-decoration: line-through;
+  color: #888;
+  font-size: 0.9rem;
+  margin-left: 8px;
+}
+
+.productBox .cartButton {
+  margin-top: 50px;
+  width: 100%;
+}
+
+
+
+.scrollBox {
+  height: 100%;
+  overflow-y: auto;
+}
+.productBox {
+  background-color: var(--mdc-elevated-card-container-color, #fff);
+  border-radius: var(--mdc-elevated-card-container-shape, 12px);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--mdc-elevated-card-container-color, #ccc);
+  box-shadow: var(--mdc-elevated-card-container-elevation, 0px 2px 4px rgba(0, 0, 0, 0.1));
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  position: relative;
+  width: 180px;
+  height: 340px;
+  align-items: center;
+  justify-content: start;
+  transition: transform 0.2s ease-in-out;
+}
+
+.productBox:hover {
+  transform: translateY(-4px);
+  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.2);
+}
+.productImage {
+  width: 100%;
+  height: auto;
+  transition: transform 0.3s ease;
+}
+
+.productImage:hover {
+  transform: scale(1.1);
+}
+
+
+
+.urunResim {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.urunAdi {
+ height: 1rem; /* İki satıra izin verir mesela */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Maksimum 2 satır */
+  -webkit-box-orient: vertical;
+  margin-inline-end: 20px; /* Ürün adı ile fiyat arasında boşluk */
+}
+
+.urunFiyat {
+  margin-bottom: 10px;        /* Butonun üstünde yeterli boşluk */
+
+  font-size: 4.1em;
+}
+
+.eskiFiyat {
+  text-decoration: line-through;
+  color: gray;
+  margin-right: 8px;
+}
+
+.sepeteEkleIkon {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+}
+
+.newPrice {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #ffae00;
+  margin-right: 0.5rem;
+}
+
+.oldPrice {
+  text-decoration: line-through;
+  color: #888;
+  font-size: 0.95rem;
+}
+
+/* .urunResim {
+  margin-bottom: 30px; /* resim ile isim arası 
+} */
+
+.newPrice {
+  font-weight: bold;
+  margin-right: 8px; /* fiyat ile eski fiyat arası */
+}
+
+.oldPrice {
+  text-decoration: line-through;
+  color: #888;
+}
+
+.productListContainer > .sapMVBox {
+  margin: 10px; /* kartlar arası boşluk */
+}
+
+
+.productCard {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 340px;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+  background-color: white;
+}
+
+.productImage {
+  width: 100%;
+  height: auto;
+  transition: transform 0.3s ease;
+}
+
+.productImage:hover {
+  transform: scale(1.1);
+}
+
+.sapUiSmallMarginTop {
+  margin-top: 20px;
+}
+
+.newPrice {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.oldPrice {
+  margin-left: 8px;
+  text-decoration: line-through;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.addToCartButton {
+  margin-top: auto;
+}
+
+.category-panel {
+  background-color: #f4f6f9;
+  padding: 12px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  height: 100%;
+}
+
+.category-panel .sapMText {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+#categoryList {
+  margin-top: 8px;
+}
+
+#categoryList .sapMSLI {
+  padding: 10px;
+  border-bottom: 1px solid #dcdcdc;
+}
+
+#categoryList .sapMSLI:hover {
+  background-color: #dfefff;
+  cursor: pointer;
 }

@@ -5,53 +5,57 @@
   xmlns:core="sap.ui.core"
   displayBlock="true">
 
-  <VBox class="sapUiContentPadding">
-    <HBox width="100%">
+  <Page enableScrolling="false" class="sapUiContentPadding">
+    <VBox fitContainer="true" height="100%">
 
-      <!-- Sol Panel -->
-      <VBox width="30%" class="sapUiSmallMargin">
-        <Text text="{/view/categoryad}" design="Bold" class="sapUiSmallMarginBottom"/>
-        <List id="subCategoryList" mode="SingleSelectMaster" selectionChange=".onSubCategorySelect"/>
-      </VBox>
+      <HBox width="100%" height="100%">
+        <!-- Sol Panel -->
+        <VBox width="20%" class="sapUiSmsapUiSmallMarginEnd" style="margin-left:50px;">
+          <Text text="{/view/categoryad}" design="Bold" class="sapUiSmallMarginBottom"/>
+          <List id="subCategoryList" mode="SingleSelectMaster" selectionChange=".onSubCategorySelect"/>
+        </VBox>
 
-      <!-- Sağ Panel -->
-      <VBox width="80%" class="sapUiSmallMargin">
-        <!-- Arama ve Sıralama -->
-        <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiSmallMarginBottom">
-          <SearchField width="300px" liveChange=".onSearch" placeholder="Ürün ara..."/>
-          <Select id="sortSelect" change=".onSortChange" width="250px">
-            <core:Item key="priceAsc" text="Fiyat: Artan"/>
-            <core:Item key="priceDesc" text="Fiyat: Azalan"/>
-            <core:Item key="discountAsc" text="İndirim: Artan"/>
-            <core:Item key="discountDesc" text="İndirim: Azalan"/>
-            <core:Item key="nameAsc" text="Ada Göre: A-Z"/>
-            <core:Item key="nameDesc" text="Ada Göre: Z-A"/>
-          </Select>
-        </HBox>
+        <!-- Sağ Panel -->
+        <VBox width="70%" class="sapUiSmallMargin" height="100%">
+          <!-- Arama ve Sıralama -->
+          <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiSmallMarginBottom">
+            <SearchField width="300px" liveChange=".onSearch" placeholder="Ürün ara..."/>
+            <Select id="sortSelect" change=".onSortChange" width="250px">
+              <core:Item key="priceAsc" text="Fiyat: Artan"/>
+              <core:Item key="priceDesc" text="Fiyat: Azalan"/>
+              <core:Item key="discountAsc" text="İndirim: Artan"/>
+              <core:Item key="discountDesc" text="İndirim: Azalan"/>
+              <core:Item key="nameAsc" text="Ada Göre: A-Z"/>
+              <core:Item key="nameDesc" text="Ada Göre: Z-A"/>
+            </Select>
+          </HBox>
 
-        <!-- Ürün Kartları -->
-        <HBox id="UrunList" wrap="Wrap" justifyContent="Start" alignItems="Start">
- 
-          <VBox id="productList" class="sapUiResponsiveMargin" items="{UrunList>/}">
-            <VBox class="productCard" width="180px" height="340px" alignItems="Center" justifyContent="Start">
-              <Image src="{UrunList>src}" width="200px" height="200px" />
-              <Text text="{UrunList>name}" class="sapUiSmallMarginTop"/>
-              <Text text="{UrunList>price} TL" class="sapUiSmallMarginTop"/>
-              <Text text="{UrunList>discount} TL" class="sapUiSmallMarginTop"/>
-              <Button text="Sepete Ekle" press=".onAddToCart" class="sapUiSmallMarginTop" type="Emphasized"/>
-            
-          </VBox> 
-          </VBox> 
-  </HBox>
+          <!-- Scrollable Ürün Listesi -->
+          <ScrollContainer vertical="true" height="calc(100vh - 250px)">
+            <HBox id="UrunList" wrap="Wrap" justifyContent="Start" alignItems="Start" class="productListContainer">
+              <items>
+                <VBox class="urunKart">
+                 <Image width="100%" src="{src}" />
+                  <Text text="{UrunList>name}" class="urunAdi sapUiSmallMarginBottom" />
+                  <HBox justifyContent="Start" alignItems="Center" class="sapUiSmallMarginTop">
+                    <Text text="{UrunList>oldPrice}" class="eskiFiyat" visible="{= ${UrunList>discount_type} !== 'none' }" />
+                    <Text text="{UrunList>price}" class="urunFiyat sapUiSmallMarginTop" />
+                  </HBox>
+                  <Button icon="sap-icon://cart" type="Emphasized" class="sepeteEkleIkon" press="onSepeteEkle" />
+                </VBox>
+              </items>
+            </HBox>
+          </ScrollContainer>
 
-        <!-- Sayfalama -->
-        <HBox justifyContent="Center" class="sapUiSmallMarginTop">
-          <Button text="◀ Geri" press=".onPrevPage" enabled="{/pagination/hasPrev}"/>
-          <Text text="{= ${/pagination/currentPage} + ' / ' + ${/pagination/totalPages} }" class="sapUiSmallMargin sapUiTinyMarginBegin sapUiTinyMarginEnd"/>
-          <Button text="İleri ▶" press=".onNextPage" enabled="{/pagination/hasNext}"/>
-        </HBox>
-      </VBox>
+          <!-- Sayfalama -->
+          <HBox justifyContent="Center" class="sapUiSmallMarginTop">
+            <Button text="◀ Geri" press=".onPrevPage" enabled="{/pagination/hasPrev}"/>
+            <Text text="{= ${/pagination/currentPage} + ' / ' + ${/pagination/totalPages} }" class="sapUiSmallMargin sapUiTinyMarginBegin sapUiTinyMarginEnd"/>
+            <Button text="İleri ▶" press=".onNextPage" enabled="{/pagination/hasNext}"/>
+          </HBox>
 
-    </HBox>
-  </VBox>
+        </VBox>
+      </HBox>
+    </VBox>
+  </Page>
 </mvc:View>

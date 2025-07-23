@@ -9,7 +9,7 @@
   <Page title="Kategoriler">
     <HBox>
       <!-- Sidebar -->
-      <VBox width="150px" class="sapUiSmallMarginEnd">
+      <VBox width="20%" class="sapUiSmallMarginEnd" style="margin-left:20px;" >
         <Button text="Ürün Ekle" press="onShowAddProduct" width="100%" />
         <Button text="Ürünler" press="onShowProductList" width="100%" class="sapUiTinyMarginTop"/>
       </VBox>
@@ -39,9 +39,15 @@
             <Input placeholder="Ürün Adı" value="{/newProduct/ad}" width="300px" />
             <Input placeholder="Fiyat" type="Number" value="{/newProduct/price}" width="300px" />
             <Input placeholder="Stok" type="Number" value="{/newProduct/stock}" width="300px" />
-            <Input placeholder="İndirim Tipi (none/percent/amount)" value="{/newProduct/discount_type}" width="300px" />
+            <!-- İndirim Tipi -->
+            <Select selectedKey="{/newProduct/discount_type}" width="300px">
+            <core:Item key="none" text="Yok" />
+            <core:Item key="percent" text="Yüzde İndirim" />
+            <core:Item key="amount" text="Tutar İndirimi" />
+            </Select>
+
             <Input placeholder="İndirim Değeri" type="Number" value="{/newProduct/discount_value}" width="300px" />
-<!-- görsel ekleme -->
+            <!-- görsel ekleme -->
             <unified:FileUploader
               id="fileUploaderUpd" change="uploadFileForProduct"
               uploadUrl="" uploadComplete="onFileUploadComplete"/>
@@ -52,19 +58,75 @@
         </Panel>
 
         <!-- Ürün Listesi -->
-        <Panel id="productListPanel" headerText="Ürünler" class="sapUiResponsiveMargin" visible="false">
-          <VBox class="sapUiSmallMargin">
-            <SearchField placeholder="Ara..." search="onSearchProduct" width="300px" />
-            <Select change="onSortProduct" width="300px">
-              <core:Item key="name" text="Ada göre sırala" />
-              <core:Item key="price" text="Fiyata göre sırala" />
-              <core:Item key="stock" text="Stoka göre sırala" />
-            </Select>
-            <List id="productList" items="{/productList}">
-              <StandardListItem title="{name}" description="{price} ₺ / Stok: {stock}" />
-            </List>
+        <Panel id="productListPanel" headerText="Ürünler" class="sapUiResponsiveMargin" visible="false" style="margin-right:50px;"> 
+  <VBox class="sapUiSmallMargin">
+    <SearchField placeholder="Ara..." search="onSearchProduct" width="300px" />
+    <Select change="onSortProduct" width="300px">
+      <core:Item key="name" text="Ada göre sırala" />
+      <core:Item key="price" text="Fiyata göre sırala" />
+      <core:Item key="stock" text="Stoka göre sırala" />
+    </Select>
+
+    <!-- Ürün Listesi -->
+    <ScrollContainer vertical="true" horizontal="false" height="400px" width="100%">
+          <List id="productList" items="{/productList}" growing="true" growingScrollToLoad="false">
+      <CustomListItem>
+        <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiSmallMargin" >
+          <VBox>
+            <Text text="{name}" class="sapUiTinyMarginBottom"/>
+            <Text text="{price} ₺ / Stok: {stock}" />
           </VBox>
-        </Panel>
+          <HBox>
+            <Button text="Güncelle" press="onEditProduct" data-product="{.}" class="sapUiTinyMarginEnd" />
+            <Button text="Sil" press="onDeleteProduct" type="Reject" />
+          </HBox>
+        </HBox>
+      </CustomListItem>
+    </List>
+     </ScrollContainer>
+  </VBox>
+</Panel>
+
+<!-- Güncelleme Popup -->
+<!-- Güncelleme Popup -->
+    <Dialog id="editDialog" title="Ürün Güncelle" draggable="true" resizable="true">
+      <VBox class="sapUiSmallMargin">
+        <Label text="Kategori" />
+        <Select
+          items="{/categories}"
+          selectedKey="{/editProduct/category}"
+          change="onDialogCategoryChange">
+          <core:Item key="{id}" text="{ad}" />
+        </Select>
+
+        <Label text="Alt Kategori" />
+        <Select items="{/filteredSubCategories}" selectedKey="{/editProduct/subcategory_id}">
+          <core:Item key="{id}" text="{ad}" />
+        </Select>
+
+        <Label text="Ürün Adı" />
+        <Input value="{/editProduct/name}" />
+
+        <Label text="Fiyat" />
+        <Input type="Number" value="{/editProduct/price}" />
+
+        <Label text="Stok" />
+        <Input type="Number" value="{/editProduct/stock}" />
+
+        <Label text="İndirim" />
+        <Input type="Number" value="{/editProduct/discount_value}" />
+
+        <Label text="Görsel (Base64)" />
+        <unified:FileUploader change="onEditFileChange" fileType="jpg,png" />
+        <Image src="{/editProduct/image_url}" width="150px" visible="{= !!${/editProduct/image_url}}" />
+      </VBox>
+      <beginButton>
+        <Button text="Kaydet" type="Emphasized" press="onSaveEditedProduct" />
+      </beginButton>
+      <endButton>
+        <Button text="Kapat" press="onDialogClose" />
+      </endButton>
+    </Dialog>
       </VBox>
     </HBox>
 

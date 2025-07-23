@@ -97,6 +97,40 @@ app.post("/api/auth/register", async (req, res) => {
   }
 });
 
+
+app.put("/api/products", (req, res) => {
+  const { id, name, price, stock, base64, subcategory_id, discount_type, discount_value, category } = req.body; // image_url kaldırıldı, base64 kullanılıyor
+
+  if (!id) return res.status(400).json({ success: false, message: "ID belirtilmeli" });
+
+  const sql = `
+    UPDATE products
+    SET name = ?, price = ?, stock = ?, base64 = ?, subcategory_id = ?, discount_type = ?, discount_value = ?, category = ?
+    WHERE id = ?
+  `;
+
+  db.query(sql, [name, price, stock, base64, subcategory_id, discount_type, discount_value, category, id], (err) => {
+    if (err) {
+      console.error("Güncelleme hatası:", err);
+      return res.status(500).json({ success: false, message: "Güncelleme başarısız" });
+    }
+    res.json({ success: true, message: "Ürün başarıyla güncellendi" });
+  });
+});
+
+// Ürün silme (DELETE /api/products?id=)
+app.delete("/api/products", (req, res) => {
+  const id = req.query.id;
+  if (!id) return res.status(400).json({ success: false, message: "ID belirtilmeli" });
+
+  db.query("DELETE FROM products WHERE id = ?", [id], (err) => {
+    if (err) {
+      console.error("Silme hatası:", err);
+      return res.status(500).json({ success: false, message: "Silme başarısız" });
+    }
+    res.json({ success: true, message: "Ürün başarıyla silindi" });
+  });
+});
 //burdan devam 
 
 // Görsellerin yükleneceği klasör ayarı

@@ -2,9 +2,10 @@ sap.ui.define(
   [
     "sap/ui/core/mvc/Controller",
     "sap/ui/model/json/JSONModel",
-    "sap/m/MessageToast",
+    "sap\/m\/MessageToast", "sap\/ui\/core\/Popup",
+    
   ],
-  function (Controller, JSONModel, MessageToast) {
+  function (Controller, JSONModel, MessageToast, Popup) {
     "use strict";
 
     return Controller.extend("migros.controller.Home", {
@@ -22,6 +23,7 @@ sap.ui.define(
             discount_value: 0,
             category: "",
           },
+          
           categories: [],
           subcategories: [],
         });
@@ -46,8 +48,8 @@ sap.ui.define(
                   items: [
                     new sap.m.Button({
                       icon: "sap-icon://product",
-                      width: "120px",
-                      height: "120px",
+                      width: "150px",
+                      height: "150px",
                       press: function () {
                         var oRouter =
                           sap.ui.core.UIComponent.getRouterFor(oController);
@@ -244,6 +246,113 @@ sap.ui.define(
 
         oModel.setProperty("/productList", aProducts);
       },
+
+
+
+ // ürün düzenleme popup açma
+    onEditProduct: function (oEvent) {
+      const oSelected = oEvent.getSource().getBindingContext().getObject();
+      this.getView().getModel().setProperty("/editProduct", Object.assign({}, oSelected));  // deep copy editProduct'a koyuldu
+      this.loadSubcategoriesForEdit(oSelected.category);  // kategori_id ise 'category' alanı
+      this.byId("editDialog").open();  // popup açıldı
+    },
+
+    // güncelleme popup içi kategori değişiminde alt kategori yükleme
+    loadSubcategoriesForEdit: function (categoryId) {
+      const that = this;
+      $.ajax({
+        url: `http://localhost:8081/api/getSubCategories?kategori=${categoryId}`,
+        method: "GET",
+        success: function (data) {
+          that.getView().getModel().setProperty("/filteredSubCategories", data);
+        },
+        error: function () {
+          MessageToast.show("Alt kategoriler yüklenemedi");
+        }
+      });
+    },
+    // Popup kategori değiştiğinde
+    onDialogCategoryChange: function (oEvent) {
+      const selectedKey = oEvent.getParameter("selectedItem").getKey();
+      const oModel = this.getView().getModel();
+      oModel.setProperty("/editProduct/category", selectedKey);  // kategori_id güncelle
+      this.loadSubcategoriesForEdit(selectedKey);               // alt kategorileri yenile
+    },
+
+    // görseli base64 formatına çevir ve modele kaydet
+    onEditFileChange: function (oEvent) {
+      const that = this;
+      const file = oEvent.getParameter("files")[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const b64 = e.target.result.split(",")[1];
+        // modelde hem image_url hem de base64 saklanıyor
+        const oModel = that.getView().getModel();
+        oModel.setProperty("/editProduct/base64", b64);  // base64 verisi eklendi
+        oModel.setProperty("/editProduct/image_url", "data:image/png;base64," + b64);  // önizleme için data URL
+      };
+      reader.readAsDataURL(file);
+    },
+    _loadProductsByCategory: function(categoryId) {
+  $.ajax({
+    url: `http://localhost:8081/api/products-category?categoryId=${categoryId}`,
+    method: "GET",
+    success: function(data) {
+      this.getView().getModel().setProperty("/productList", data);
+    }.bind(this),
+    error: function() {
+      MessageToast.show("Ürünler yüklenemedi");
+    }
+  });
+},
+
+
+    // kaydet butonuna tıklanınca
+    onSaveEditedProduct: function () {
+      const oModel = this.getView().getModel();
+      const u = oModel.getProperty("/editProduct");
+      if (!u.id) {
+        MessageToast.show("Güncellenecek ürün yok");
+        return;
+      }
+      $.ajax({
+        url: "http://localhost:8081/api/products",
+        method: "PUT",
+        contentType: "application/json",
+        data: JSON.stringify(u),  // id, base64 dahil tüm alanlar gönderiliyor
+        success: () => {
+          MessageToast.show("Ürün başarıyla güncellendi");
+          this.byId("editDialog").close();
+           var currentCategory = this.getView().getModel().getProperty("/newProduct/kategori_id");
+      this.loadProductList();
+    },
+        
+        error: () => MessageToast.show("Güncelleme sırasında hata oluştu")
+      });
+    },
+    onDeleteProduct: function (oEvent) {
+      var oProduct = oEvent.getSource().getBindingContext().getObject();
+      if (confirm("Bu ürünü silmek istediğinize emin misiniz?")) {
+        $.ajax({
+          url: "http://localhost:8081/api/products?id=" + oProduct.id,
+          method: "DELETE",
+          success: function () {
+            MessageToast.show("Ürün başarıyla silindi");
+            this.loadProductList();
+          }.bind(this),
+          error: function () {
+            MessageToast.show("Silme işlemi başarısız oldu");
+          }
+        });
+      }
+    },
+
+    // Dialog kapatma fonksiyonu
+    onDialogClose: function () {
+      this.byId("editDialog").close();  // popup'ı kapat
+    },
       //Görsel Yükleme fonksiyonu
       uploadFileForProduct: function (oEvent) {
         var that = this;

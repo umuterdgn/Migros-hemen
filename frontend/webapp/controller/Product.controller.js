@@ -86,14 +86,27 @@ sap.ui.define(
             "http://localhost:8081/api/products-category?categoryId=" + (categoryId),
           dataType: "json",
           method: "GET",
-         success: function (data) {
+        success: function (data) {
   for (var i = 0; i < data.length; i++) {
-    data[i].src = "data:image/jpeg;base64," + atob(unescape(decodeURIComponent( data[i].base64)));
+    data[i].src = "data:image/jpeg;base64," + data[i].base64;
 
-    // BURAYA YAZ
-    console.log(data[i].src);
+   
+    const originalPrice = parseFloat(data[i].price);
+    const discount = parseFloat(data[i].discount_value);
+
+    if (data[i].discount_type && data[i].discount_type !== "none") {
+      data[i].oldPrice = originalPrice.toFixed(2); // Çizgili gösterilecek
+      if (data[i].discount_type === "percentage" || data[i].discount_type === "rate") {
+        data[i].price = (originalPrice - originalPrice * (discount / 100)).toFixed(2);
+      } else if (data[i].discount_type === "fixed") {
+        data[i].price = (originalPrice - discount).toFixed(2);
+      }
+    } else {
+      data[i].oldPrice = null;
+    }
   }
 
+  // Model set işlemleri
   var oModel = new JSONModel();
   oModel.setData(data);
   that.getOwnerComponent().setModel(oModel, "UrunList");
@@ -188,32 +201,38 @@ sap.ui.define(
               : (product.price - product.discount_value).toFixed(2);
 
           const card = new sap.m.VBox({
-            width: "180px",
-            height: "340px",
-            border: "30px",
-            alignItems: "Center",
-            justifyContent: "Start",
-            items: [
-              new sap.m.Image({
-                src: product.src,
-                width: "160px",
-                height: "140px",
-              }),
-              new sap.m.Text({ text: product.name, wrapping: true }),
-              new sap.m.Text({ text: "Fiyat: " + product.price + " ₺" }),
-              new sap.m.Text({
-                text: "İndirimli: " + discount + " ₺",
-                visible: product.discount_value > 0,
-              }),
-              new sap.m.Button({
-                text: "Sepete Ekle",
-                icon: "sap-icon://cart",
-                press: () =>
-                  MessageToast.show(product.name + " sepete eklendi"),
-              }),
-            ],
-          }).addStyleClass("sapUiSmallMargin productBox");
+  items: [
+    new sap.m.Image({
+      src: product.src,
+      width: "170px",
+      height: "150px",
+    }),
+    new sap.m.Text({
+      text: product.name,
+    }).addStyleClass("productName"),
 
+    new sap.m.HBox({
+      justifyContent: "Start",
+      alignItems: "Center",
+      items: [
+        new sap.m.Text({
+          text: product.price + " ₺",
+        }).addStyleClass("newPrice"),
+
+        new sap.m.Text({
+          text: product.oldPrice ? product.oldPrice + " ₺" : "",
+          visible: !!product.oldPrice,
+        }).addStyleClass("oldPrice"),
+      ],
+    }).addStyleClass("priceBox"),
+
+    new sap.m.Button({
+      text: "",
+      icon: "sap-icon://cart",
+      press: () => MessageToast.show(product.name + " sepete eklendi"),
+    }).addStyleClass("cartButton"),
+  ],
+}).addStyleClass("productBox");
 
           oBox.addItem(card);
         });
