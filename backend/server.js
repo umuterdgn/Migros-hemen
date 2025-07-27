@@ -293,6 +293,101 @@ app.post("/api/addProduct", (req, res) => {
      });
    
 
+     //CART API'leri (SEPET)
+     app.post("/api/cart", (req, res) => {
+  const { users_id, products_id, quantity, note } = req.body;
+  const sql = `INSERT INTO cart (users_id, products_id, quantity, note) VALUES (?, ?, ?, ?)`;
+  db.query(sql, [users_id, products_id, quantity, note], (err, result) => {
+    if (err) {
+      console.error("Sepet ekleme hatası:", err);
+      return res.status(500).json({ success: false, message: "Sepet eklenemedi", error: err.message });
+    }
+    res.status(201).json({ success: true, message: "Sepet başarıyla eklendi", cartId: result.insertId });
+  });
+});
+
+// sepete ekle
+app.post("/api/cart", (req, res) => {
+  const { users_id, products_id, quantity, note } = req.body;
+  if (!users_id || !products_id) {
+    return res.status(400).json({ success: false, message: "Eksik parametre" });
+  }
+  const sql = `
+    INSERT INTO cart (users_id, product_id, quantity, note)
+    VALUES (?, ?, ?, ?)
+  `;
+  db.query(sql, [users_id, products_id, quantity || 1, note || ""], (err, result) => {
+    if (err) {
+      console.error("Sepete ekleme hatası:", err);
+      return res.status(500).json({ success: false, message: "Eklenemedi" });
+    }
+    res.json({ success: true, message: "Sepete eklendi", cartId: result.insertId });
+  });
+});
+
+// sepeti listele
+app.get("/api/cart", (req, res) => {
+  const usersId = req.query.users_id;
+  if (!usersId) return res.status(400).json({ message: "users_id gerekli" });
+  const sql = `
+    SELECT c.id, c.products_id, c.quantity, c.note,
+           p.name, p.price, p.base64
+    FROM cart c
+    JOIN products p ON p.id = c.products_id
+    WHERE c.users_id = ?
+  `;
+  db.query(sql, [usersId], (err, results) => {
+    if (err) return res.status(500).json(err);
+    res.json(results);
+  });
+});
+
+//sepeti sil 
+
+// CART’ten ürün sil
+app.delete("/api/cart", (req, res) => {
+  const id = req.query.id;
+  if (!id) {
+    return res.status(400).json({ success: false, message: "id parametresi gerekli" });
+  }
+  db.query("DELETE FROM cart WHERE id = ?", [id], (err, result) => {
+    if (err) {
+      console.error("Sepet silme hatası:", err);
+      return res.status(500).json({ success: false, message: "Silme başarısız", error: err.message });
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: "Bu id ile eşleşen ürün bulunamadı" });
+    }
+    res.json({ success: true, message: "Ürün başarıyla silindi" });
+  });
+});
+
+//sepeti güncelle
+// CART güncelleme (quantity)
+app.put("/api/cart", (req, res) => {
+  const { id, quantity } = req.body;
+  if (!id || quantity == null) {
+    return res.status(400).json({ success: false, message: "id ve quantity gerekli" });
+  }
+  db.query(
+    "UPDATE cart SET quantity = ? WHERE id = ?",
+    [quantity, id],
+    (err, result) => {
+      if (err) {
+        console.error("Sepet güncelleme hatası:", err);
+        return res.status(500).json({ success: false, message: "Güncelleme başarısız" });
+      }
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ success: false, message: "Ürün bulunamadı" });
+      }
+      res.json({ success: true, message: "Adet güncellendi" });
+    }
+  );
+});
+
+
+
+
   // const buffer = Buffer.from(file, "base64"); // base64'ü binary veriye dönüştür
   // const filename = uuidv4() + ".png"; // benzersiz isim
   // const filePath = path.join(__dirname, "uploads", filename);

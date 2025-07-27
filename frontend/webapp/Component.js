@@ -1,37 +1,41 @@
 sap.ui.define([
   "sap/ui/core/UIComponent",
-  "sap/ui/model/json/JSONModel",
-  
-], function (UIComponent) {
+  "sap/ui/model/json/JSONModel"
+], function (UIComponent, JSONModel) {
   "use strict";
 
   return UIComponent.extend("migros.Component", {
-      metadata: {
-          manifest: "json"
-      },
+    metadata: {
+      manifest: "json"
+    },
 
-      init: function () {
-          UIComponent.prototype.init.apply(this, arguments);
-          
-          // Tema Yükleniyor
-          sap.ui.getCore().applyTheme("sap_fiori_3");
+    init: function () {
+      // 1) Üst sınıf init’i bir kez çağrılıyor
+      UIComponent.prototype.init.apply(this, arguments);
 
-          // Stil dosyasını yükle
-          sap.ui.require(["sap/ui/dom/includeStylesheet"], function (includeStylesheet) {
-              includeStylesheet("css/style.css");
-          });
+      // 2) Tema ve stil (istiyorsan)
+      sap.ui.getCore().applyTheme("sap_fiori_3");
+      sap.ui.require(["sap/ui/dom/includeStylesheet"], function (includeStylesheet) {
+        includeStylesheet("css/style.css");
+      });
 
-          // Router'ı Başlat
-          this.getRouter().initialize();
-        //   this.getRouter().navTo("login"); 
-      },
+      // 3) Global cartModel
+      var oCartModel = new JSONModel({
+        cartItems: [],
+        summary: {}
+      });
+      this.setModel(oCartModel, "cartModel");
 
-      createContent: function () {
-          return sap.ui.view({
-              viewName: "migros.view.App",
-              type: "XML",
-              id: "app"
-          });
-      }
+      // 4) Router başlat (bir kez)
+      this.getRouter().initialize();
+    },
+
+    createContent: function () {
+      return sap.ui.view({
+        viewName: "migros.view.App",
+        type: "XML",
+        id: "app"
+      });
+    }
   });
 });

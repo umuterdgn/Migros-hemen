@@ -1,0 +1,7 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
+  <StepInput
+    id="stepInput"
+    value="{stepValue}"      
+    width="130px"
+    change="onStepInputChange"/>
+</core:FragmentDefinition>

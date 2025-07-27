@@ -6,6 +6,7 @@ sap.ui.define(
     "sap/ui/model/Sorter",
     "sap/ui/model/Filter",
     "sap/ui/model/FilterOperator",
+    "sap/ui/core/UIComponent"
   ],
   function (
     Controller,
@@ -13,7 +14,8 @@ sap.ui.define(
     MessageToast,
     Sorter,
     Filter,
-    FilterOperator
+    FilterOperator,
+    UIComponent
   ) {
     "use strict";
 
@@ -58,6 +60,8 @@ sap.ui.define(
           }
         );
       },
+    
+      
 
       _bindSubcategories: function () {
         const oList = this.byId("subCategoryList");
@@ -227,10 +231,11 @@ sap.ui.define(
     }).addStyleClass("priceBox"),
 
     new sap.m.Button({
-      text: "",
-      icon: "sap-icon://cart",
-      press: () => MessageToast.show(product.name + " sepete eklendi"),
-    }).addStyleClass("cartButton"),
+  text: "",
+  icon: "sap-icon://cart",
+  // product’u direkt closure’dan geçiriyoruz:
+  press: this.onSepeteEkle.bind(this, product)
+}).addStyleClass("cartButton"),
   ],
 }).addStyleClass("productBox");
 
@@ -238,6 +243,59 @@ sap.ui.define(
         });
       },
 
+      onPressCart: function() {
+         var oRouter = UIComponent.getRouterFor(this);
+            oRouter.navTo("cart");
+
+            
+
+            //İLERİKİ ZAMAN BAKILICAK 
+  // const sToken = localStorage.getItem("token");
+  // const oRouter = this.getOwnerComponent().getRouter();
+  // if (!sToken) {
+  //   // Giriş yoksa login sayfasına yönlendir
+  //   oRouter.navTo("loginRoute");
+  // } else {
+  //   // Sepet sayfasına git
+  // }
+},
+onNavBack: function () {
+  window.history.back();
+},
+// Ürünü sepete ekle butonuna basıldığında
+onSepeteEkle: function (oProduct) {
+  // oProduct artık direkt closure’dan geliyor, getSource falan yok
+  var oCartModel = this.getOwnerComponent().getModel("cartModel");
+  var aCartItems = oCartModel.getProperty("/cartItems") || [];
+  var existing = aCartItems.find(item => item.id === oProduct.id);
+  if (existing) {
+    existing.quantity += 1;
+  } else {
+    aCartItems.push({
+      id:       oProduct.id,
+      name:     oProduct.name,
+      price:    parseFloat(oProduct.price),
+      quantity: 1,
+      src:      oProduct.src,
+      oldPrice: oProduct.oldPrice || null
+    });
+  }
+  oCartModel.setProperty("/cartItems", aCartItems);
+  this._updateSummary(oCartModel);
+  MessageToast.show(oProduct.name + " sepete eklendi");
+},
+    _updateSummary: function (oModel) {
+      var aItems = oModel.getProperty("/cartItems") || [];
+      var totalItems = 0, subtotal = 0, discount = 0;
+      aItems.forEach(function (i) {
+        totalItems += i.quantity;
+        subtotal += i.price * i.quantity;
+        if (i.oldPrice) { discount += (i.oldPrice - i.price) * i.quantity; }
+      });
+      var deliveryText = subtotal >= 200 ? "Ücretsiz" : (200 - subtotal).toFixed(2) + " ₺ eksik";
+      var total = (subtotal - discount).toFixed(2);
+      oModel.setProperty("/summary", { totalItems: totalItems, subtotal: subtotal.toFixed(2), discount: discount.toFixed(2), deliveryText: deliveryText, total: total, message: subtotal < 200 ? "Sepete " + (200 - subtotal).toFixed(2) + " ₺ ekle, ücretsiz teslimat için." : "" });
+    },
       onNextPage: function () {
         const page = this.oModel.getProperty("/pagination/currentPage");
         this._paginate(page + 1);

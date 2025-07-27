@@ -496,9 +496,8 @@
 }
 
 .sepeteEkleIkon {
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
+  margin-top: auto;    /* flex içindeki boşluğu butonun üstünde toplar */
+  align-self: center;  /* istersen butonu yatayda ortalar */
 }
 
 .newPrice {
@@ -600,4 +599,20 @@
 #categoryList .sapMSLI:hover {
   background-color: #dfefff;
   cursor: pointer;
+}
+
+.cartItemCard {
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 1rem;
+}
+.fullWidth {
+  width: 100%;
+}
+.summaryContainer {
+  position: sticky;
+  top: 1rem;
+}
+.cartListContainer .sapMList {
+  background: none;
 }

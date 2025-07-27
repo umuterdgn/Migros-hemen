@@ -72,6 +72,11 @@
                "name": "register",
                "target": "register"
              },
+             {
+          "name": "cart",
+          "pattern": "cart",
+          "target": "cart"
+        },
               {
                 "pattern": "product/{categoryId}/ {categoryName}",
                 "name": "productRoute",
@@ -103,6 +108,13 @@
                     "viewName": "Users"
                 
                 },
+                "cart": {
+                    "viewName": "Cart",
+                   "viewPath": "migros.view" ,
+                    "viewId": "cart",
+                    "controlAggregation": "pages",
+                    "controlId": "app"
+        },
                     "product": {
                     "viewName": "Product",
                     "viewType": "XML",
