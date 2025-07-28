@@ -1,45 +1,73 @@
-<mvc:View controllerName="migros.controller.Cart" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" displayBlock="true">
+<mvc:View
+  controllerName="migros.controller.Cart"
+  xmlns="sap.m"
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns:core="sap.ui.core"
+  displayBlock="true">
+
   <Page title="Sepetim" class="sapUiContentPadding">
+    <!-- Ana satır: liste ve özet yan yana -->
     <HBox justifyContent="SpaceBetween" class="sapUiSmallMargin">
-      <VBox width="65%">
-        <List items="{cartModel>/cartItems}">
-          <CustomListItem>
-            <HBox justifyContent="SpaceBetween" alignItems="Center">
-              <Image src="{cartModel>src}" width="80px" height="80px"/>
-              <VBox>
+      
+      <!-- Sol sütun: ürün listesi -->
+      <VBox width="65%" fitContainer="true">
+        <List
+          items="{cartModel>/cartItems}"
+          updateFinished="onListUpdateFinished"
+          class="sapUiSmallMarginBottom"
+          inset="false">
+          <items>
+            <CustomListItem>
+              <HBox justifyContent="SpaceBetween" alignItems="Center">
+                
+                <Image
+                  src="{cartModel>src}"
+                  width="80px"
+                  height="80px"/>
+                
                 <Text text="{cartModel>name}"/>
-              </VBox>
-              <HBox alignItems="Center">
-                <StepInput
-                                  value="{cartModel>quantity}"
-                                  min="1"
-                                  max="100"
-                                  step="1"
-                                  width="100px"
-                                  change="onQuantityChange"/>
-                                  <!-- customData="{key:'id',value:'{cartModel>id}'}" -->
 
+                <!-- StepInput fragment -->
+                <core:Fragment
+                  fragmentName="migros.view.fragments.StepInput"
+                  type="XML"/>
 
-                <!-- <Button icon="sap-icon://less" press="onDecreaseQty" customData="{key:'id',value:'{cartModel>id}'}"/>
-                <Text text="{cartModel>quantity}"/>
-                <Button icon="sap-icon://add" press="onIncreaseQty" customData="{key:'id',value:'{cartModel>id}'}"/> -->
-                <!-- <Text text="{cartModel>price} ₺"/> -->
+                <Button
+                  icon="sap-icon://delete"
+                  press="onDeleteItem"
+                  customData="{key:'id',value:'{cartModel>id}'}"/>
               </HBox>
-              <Button icon="sap-icon://delete" press="onDeleteItem" customData="{key:'id',value:'{cartModel>id}'}"/>
-            </HBox>
-          </CustomListItem>
+            </CustomListItem>
+          </items>
         </List>
       </VBox>
-      <VBox width="30%">
+
+      <!-- Sağ sütun: sepet özeti -->
+      <VBox width="30%" class="sapUiSmallMarginBegin">
         <Panel headerText="Sepet Özeti">
           <VBox>
-            <HBox justifyContent="SpaceBetween"><Text text="Toplam Tutar:"/><Text text="{cartModel>/summary/subtotal} ₺"/></HBox>
-            <HBox justifyContent="SpaceBetween"><Text text="Teslimat Tutarı:"/><Text text="{cartModel>/summary/deliveryText}"/></HBox>
-            <HBox justifyContent="SpaceBetween"><Text design="Bold" text="Ödenecek Tutar:"/><Text design="Bold" text="{cartModel>/summary/total} ₺"/></HBox>
+            <HBox justifyContent="SpaceBetween">
+              <Text text="Toplam Tutar:"/>
+              <Text text="{cartModel>/summary/subtotal} ₺"/>
+            </HBox>
+            <HBox justifyContent="SpaceBetween">
+              <Text text="Teslimat Tutarı:"/>
+              <Text text="{cartModel>/summary/deliveryText}"/>
+            </HBox>
+            <HBox justifyContent="SpaceBetween">
+              <Text design="Bold" text="Ödenecek Tutar:"/>
+              <Text design="Bold" text="{cartModel>/summary/total} ₺"/>
+            </HBox>
           </VBox>
         </Panel>
-        <Button text="Devam Et" type="Emphasized" enabled="{= ${cartModel>/summary/subtotal} > 0 }" press="onCheckout"/>
+        <Button
+          text="Devam Et"
+          type="Emphasized"
+          enabled="{= ${cartModel>/summary/subtotal} > 0 }"
+          press="onCheckout"
+          class="sapUiSmallMarginTop"/>
       </VBox>
+
     </HBox>
   </Page>
 </mvc:View>

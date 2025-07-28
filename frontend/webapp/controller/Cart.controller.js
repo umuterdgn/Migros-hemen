@@ -8,6 +8,7 @@ sap.ui.define(["sap/ui/core/mvc/Controller"], function (Controller) {
       this._updateSummary(oCartModel);
     },
 
+    
 
 onQuantityChange: function(oEvt) {
   var iNewQty = oEvt.getParameter("value");
@@ -28,6 +29,23 @@ onQuantityChange: function(oEvt) {
   oModel.refresh(); // opsiyonel
 }
 ,
+onStepInputChange: function(oEvt) {
+  // Yeni adet
+  var iNewQty = oEvt.getParameter("value");
+  // Hangi satır? Fragment içindeki CustomData’dan alıyoruz
+  var sId = oEvt.getSource().getCustomData()[0].getValue();
+
+  var oModel = this.getOwnerComponent().getModel("cartModel");
+  var aItems = oModel.getProperty("/cartItems");
+  var oItem = aItems.find(function(i){ return i.id == sId; });
+
+  if (oItem) {
+    oItem.quantity = iNewQty;
+    oModel.refresh();          // Modeli güncelle
+    this._updateSummary(oModel); // Özet hesaplamayı yeniden çalıştır
+  }
+},
+
       // Sepet öğesini sil
     onDeleteItem: function (oEvt) {
       var sId = oEvt.getSource().getCustomData()[0].getValue();

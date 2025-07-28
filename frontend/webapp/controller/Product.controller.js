@@ -6,7 +6,8 @@ sap.ui.define(
     "sap/ui/model/Sorter",
     "sap/ui/model/Filter",
     "sap/ui/model/FilterOperator",
-    "sap/ui/core/UIComponent"
+    "sap/ui/core/Fragment",      
+  "sap/ui/core/UIComponent"
   ],
   function (
     Controller,
@@ -15,6 +16,7 @@ sap.ui.define(
     Sorter,
     Filter,
     FilterOperator,
+    Fragment,                      
     UIComponent
   ) {
     "use strict";
@@ -193,55 +195,102 @@ sap.ui.define(
 
         this._renderProducts(pageItems);
       },
+// Controller veya ayrı formatter.js içinde
+stepInputLayout: function() {
+  return new sap.m.FlexItemData({ growFactor: 0, shrinkFactor: 0 });
+}
+,
+     _renderProducts: function (items) {
+  const oBox = this.byId("UrunList");
+  const oCartModel = this.getOwnerComponent().getModel("cartModel");
+  let aCartItems = oCartModel.getProperty("/cartItems") || [];
 
-      _renderProducts: function (items) {
-        const oBox = this.byId("UrunList");
-        oBox.removeAllItems();
+  oBox.removeAllItems();
 
-        items.forEach((product) => {
-          const discount =
-            product.discount_type === "rate"
-              ? (product.price * (1 - product.discount_value / 100)).toFixed(2)
-              : (product.price - product.discount_value).toFixed(2);
+  items.forEach((product) => {
+    // Kart container
+    const oCard = new sap.m.VBox({}).addStyleClass("productBox");
 
-          const card = new sap.m.VBox({
-  items: [
-    new sap.m.Image({
-      src: product.src,
-      width: "170px",
-      height: "150px",
-    }),
-    new sap.m.Text({
-      text: product.name,
-    }).addStyleClass("productName"),
+    // Ürün görseli ve adı vs...
+    oCard.addItem(new sap.m.Image({ src: product.src, width: "170px", height: "150px" }));
+    oCard.addItem(new sap.m.Text({ text: product.name }).addStyleClass("productName"));
+    // Fiyat gösterimi...
+    // ...
 
-    new sap.m.HBox({
-      justifyContent: "Start",
-      alignItems: "Center",
-      items: [
-        new sap.m.Text({
-          text: product.price + " ₺",
-        }).addStyleClass("newPrice"),
+    // Action alanı: HBox içine ya SepeteEkle butonu ya StepInput+Sil butonu gelecek
+    const oActionHBox = new sap.m.HBox({ alignItems: "Center", justifyContent: "Start" });
 
-        new sap.m.Text({
-          text: product.oldPrice ? product.oldPrice + " ₺" : "",
-          visible: !!product.oldPrice,
-        }).addStyleClass("oldPrice"),
-      ],
-    }).addStyleClass("priceBox"),
+    // Sepette var mı kontrol et
+    const oInCart = aCartItems.find(item => item.id === product.id);
 
-    new sap.m.Button({
-  text: "",
-  icon: "sap-icon://cart",
-  // product’u direkt closure’dan geçiriyoruz:
-  press: this.onSepeteEkle.bind(this, product)
-}).addStyleClass("cartButton"),
-  ],
-}).addStyleClass("productBox");
+    if (!oInCart) {
+      // Henüz sepette değil: sepete ekle butonu
+      oActionHBox.addItem(new sap.m.Button({
+        icon: "sap-icon://cart",
+        type: "Emphasized",
+        press: this.onSepeteEkle.bind(this, product)
+      }).addStyleClass("sepeteEkleIkon"));
+      oCard.addItem(oActionHBox);
+    } else {
+      // Sepette var: StepInput fragment + sil butonu
+      // İlk önce fragment’i yükle ve konteks ile bind et
+      Fragment.load({
+        name: "migros.view.fragments.StepInput",
+        controller: this
+      }).then(function(oStepInput) {
+        // bağlama: cartModel'de oInCart'ın index'ine
+        const iIndex = aCartItems.indexOf(oInCart);
+        oStepInput.setBindingContext(
+          new sap.ui.model.Context(oCartModel, "/cartItems/" + iIndex),
+          "cartModel"
+        );
+        // change event Product için farklı handler
+        oStepInput.attachChange(this.onProductStepChange.bind(this));
+        oActionHBox.addItem(oStepInput);
 
-          oBox.addItem(card);
-        });
-      },
+        // Sil butonu
+        oActionHBox.addItem(new sap.m.Button({
+          icon: "sap-icon://delete",
+          press: () => this._removeFromCart(product.id)
+        }));
+      }.bind(this));
+
+      oCard.addItem(oActionHBox);
+    }
+
+    oBox.addItem(oCard);
+  });
+},
+
+onProductStepChange: function(oEvt) {
+  const iNewQty = oEvt.getParameter("value");
+  const sId = oEvt.getSource().getCustomData()[0].getValue();
+  const oCartModel = this.getOwnerComponent().getModel("cartModel");
+  let a = oCartModel.getProperty("/cartItems");
+  let oItem = a.find(i => i.id === sId);
+  if (oItem) {
+    if (iNewQty <= 0) {
+      // Sıfırlandıysa sepetten çıkar
+      this._removeFromCart(sId);
+    } else {
+      // Aksi halde miktarı güncelle ve özet + ürünleri yeniden render et
+      oItem.quantity = iNewQty;
+      oCartModel.refresh();
+      this._updateSummary(oCartModel);
+    }
+  }
+},
+_removeFromCart: function(sId) {
+  const oCartModel = this.getOwnerComponent().getModel("cartModel");
+  let a = oCartModel.getProperty("/cartItems") || [];
+  a = a.filter(i => i.id !== sId);
+  oCartModel.setProperty("/cartItems", a);
+  this._updateSummary(oCartModel);
+
+  // Ürün listesini de yeniden render et ki ikon geri gelsin
+  this._renderProducts(this.oModel.getProperty("/displayedProducts"));
+},
+
 
       onPressCart: function() {
          var oRouter = UIComponent.getRouterFor(this);
@@ -283,6 +332,7 @@ onSepeteEkle: function (oProduct) {
   oCartModel.setProperty("/cartItems", aCartItems);
   this._updateSummary(oCartModel);
   MessageToast.show(oProduct.name + " sepete eklendi");
+   this._renderProducts(this.oModel.getProperty("/displayedProducts"));
 },
     _updateSummary: function (oModel) {
       var aItems = oModel.getProperty("/cartItems") || [];

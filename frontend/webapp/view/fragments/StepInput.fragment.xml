@@ -1,7 +1,15 @@
-<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
+<core:FragmentDefinition
+  xmlns="sap.m"
+  xmlns:core="sap.ui.core">
   <StepInput
-    id="stepInput"
-    value="{stepValue}"      
-    width="130px"
-    change="onStepInputChange"/>
+    value="{cartModel>quantity}"
+    min="1"
+    max="100"
+    step="1"
+    width="100px"
+    change="onStepInputChange">
+    <customData>
+      <core:CustomData key="id" value="{cartModel>id}" />
+    </customData>
+  </StepInput>
 </core:FragmentDefinition>
