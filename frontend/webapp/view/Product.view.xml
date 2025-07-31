@@ -34,7 +34,14 @@
         <VBox width="20%" class="sapUiSmsapUiSmallMarginEnd" style="margin-left:50px;">
           <Text text="{/view/categoryad}" design="Bold" class="sapUiSmallMarginBottom"/>
           <List id="subCategoryList" mode="SingleSelectMaster" selectionChange=".onSubCategorySelect"/>
-        </VBox>
+          <Text text="Markalar" design="Bold" class="sapUiSmallMarginTop"/>
+            <List
+              id="brandList"
+              mode="MultiSelect"
+              select=".onBrandSelect"
+              growing="true"
+              growingThreshold="20"/>
+            </VBox>
 
         <!-- Sağ Panel -->
         <VBox width="70%" class="sapUiSmallMargin" height="100%">
@@ -55,7 +62,7 @@
           <ScrollContainer vertical="true" height="calc(100vh - 250px)">
             <HBox id="UrunList" wrap="Wrap" justifyContent="Start" alignItems="Start" class="productListContainer">
               <items>
-                <VBox class="urunKart">
+              
                  <Image width="100%" src="{src}" />
                   <Text text="{UrunList>name}" class="urunAdi sapUiSmallMarginBottom" />
                   <HBox justifyContent="Start" alignItems="Center" class="sapUiSmallMarginTop">
@@ -64,7 +71,7 @@
                   </HBox>
                   <Button icon="sap-icon://cart" type="Emphasized" class="sepeteEkleIkon" press="onSepeteEkle" />
 
-                </VBox>
+                
               </items>
             </HBox>
           </ScrollContainer>

@@ -1,0 +1,86 @@
+<mvc:View
+  controllerName="migros.controller.Checkout"
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns="sap.m"
+  xmlns:core="sap.ui.core"
+  displayBlock="true">
+  
+  <Page title="Sipariş Oluştur" class="sapUiContentPadding">
+    <HBox justifyContent="SpaceBetween" wrap="Wrap">
+
+      <!-- Sağ sütun: sipariş özeti -->
+      <VBox width="30%" class="sapUiSmallMarginBegin">
+        <Panel headerText="Sepet Özeti">
+          <VBox>
+            <HBox justifyContent="SpaceBetween">
+              <Text text="Ürünler:"/>
+              <Text text="{cartModel>/summary/totalItems} adet"/>
+            </HBox>
+            <HBox justifyContent="SpaceBetween">
+              <Text text="Ara Toplam:"/>
+              <Text text="{cartModel>/summary/subtotal} ₺"/>
+            </HBox>
+            <HBox justifyContent="SpaceBetween">
+              <Text text="İndirim:"/>
+              <Text text="{cartModel>/summary/discount} ₺"/>
+            </HBox>
+            <HBox justifyContent="SpaceBetween">
+              <Text text="Teslimat:"/>
+              <Text text="{cartModel>/summary/deliveryText}"/>
+            </HBox>
+            <HBox justifyContent="SpaceBetween" class="sapUiSmallMarginTop">
+              <Text design="Bold" text="Genel Toplam:"/>
+              <Text design="Bold" text="{cartModel>/summary/total} ₺"/>
+            </HBox>
+          </VBox>
+        </Panel>
+      </VBox>
+
+      <!-- Sol sütun: teslimat & ödeme -->
+      <VBox width="65%" fitContainer="true">
+        <Panel headerText="Teslimat Seçimi">
+          <VBox>
+            <Select
+              items="{
+                path: '/deliveryOptions' 
+              }"
+              selectedKey="{/checkout/deliveryOption}">
+              <core:Item key="{key}" text="{text}" />
+            </Select>
+          </VBox>
+        </Panel>
+
+        <Panel headerText="Ödeme Yöntemi" class="sapUiSmallMarginTop">
+          <VBox>
+            <Select
+              items="{
+                path: '/paymentMethods' 
+              }"
+              selectedKey="{/checkout/paymentMethod}">
+              <core:Item key="{key}" text="{text}" />
+            </Select>
+          </VBox>
+        </Panel>
+
+        <Panel headerText="Money Kullan" class="sapUiSmallMarginTop">
+          <HBox alignItems="Center" justifyContent="SpaceBetween">
+            <Text text="Mevcut Puanın: {/user/money} ₺"/>
+            <StepInput
+              value="{/checkout/useMoney}"
+              min="0"
+              max="{/user/money}"
+              liveChange=".onUseMoneyChange"/>
+          </HBox>
+        </Panel>
+
+        <Button
+          text="Siparişi Tamamla"
+          type="Emphasized"
+          class="sapUiSmallMarginTop"
+          press="onPlaceOrder"
+          enabled="{= ${cartModel>/summary/total} > 0 }"/>
+      </VBox>
+
+    </HBox>
+  </Page>
+</mvc:View>

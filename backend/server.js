@@ -98,26 +98,62 @@ app.post("/api/auth/register", async (req, res) => {
 });
 
 
-app.put("/api/products", (req, res) => {
-  const { id, name, price, stock, base64, subcategory_id, discount_type, discount_value, category } = req.body; // image_url kaldırıldı, base64 kullanılıyor
-
-  if (!id) return res.status(400).json({ success: false, message: "ID belirtilmeli" });
-
-  const sql = `
-    UPDATE products
-    SET name = ?, price = ?, stock = ?, base64 = ?, subcategory_id = ?, discount_type = ?, discount_value = ?, category = ?
-    WHERE id = ?
-  `;
-
-  db.query(sql, [name, price, stock, base64, subcategory_id, discount_type, discount_value, category, id], (err) => {
-    if (err) {
-      console.error("Güncelleme hatası:", err);
-      return res.status(500).json({ success: false, message: "Güncelleme başarısız" });
+// app.put("/api/products", (req, res) => {
+//   const {
+//     id, name, price, stock, base64,
+//     subcategory_id,
+//     discount_type, discount_value, discount_scope,
+//     category
+//   } = req.body;
+//   // …
+//   const sql = `
+//     UPDATE products
+//     SET name=?, price=?, stock=?, base64=?,
+//         subcategory_id=?, discount_type=?, discount_value=?, discount_scope=?, category=?
+//     WHERE id=?
+//   `;
+//   db.query(sql, [
+//     name, price, stock, base64,
+//     subcategory_id, discount_type, discount_value, discount_scope, category,
+//     id
+//   ], (err) => { /* … */ });
+// });
+app.get("/api/brands-by-subcategory", (req, res) => {
+  const subId = parseInt(req.query.subId, 10);
+  if (!subId) {
+    return res.status(400).json({ message: "subId query parametresi gerekli" });
+  }
+  // Eğer brands tablonuzda alt-kategori ilişkisi subcategory_id kolonu ile tutuluyorsa:
+  db.query(
+    "SELECT id, name, discount_type, discount_value FROM brands WHERE subcategory_id = ?",
+    [subId],
+    (err, rows) => {
+      if (err) {
+        console.error("brands-by-subcategory hatası:", err);
+        return res.status(500).json({ message: "Sunucu hatası" });
+      }
+      res.json(rows);
     }
-    res.json({ success: true, message: "Ürün başarıyla güncellendi" });
-  });
+  );
 });
 
+app.get("/api/products-category", (req, res) => {
+  const categoryId = req.query.categoryId;
+  const sql = `
+    SELECT 
+      p.*, b.name AS brand_name,
+      b.discount_type AS brand_disc_type,
+      b.discount_value AS brand_disc_value
+    FROM products p
+    JOIN brands b ON p.brand_id = b.id
+    WHERE p.category = ?
+  `;
+  db.query(sql, [categoryId], (err, rows) => {
+    if (err) return res.status(500).json(err);
+    // client’a ham veriyi gönderiyoruz; price hesaplamasını UI’da yapacağız
+    res.json(rows);
+  });
+});
 // Ürün silme (DELETE /api/products?id=)
 app.delete("/api/products", (req, res) => {
   const id = req.query.id;
@@ -145,6 +181,8 @@ app.delete("/api/products", (req, res) => {
 // });
 
 // const upload = multer({ storage: storage });
+
+
 // Tüm kategorileri getir
 app.get("/api/categories", (req, res) => {
     db.query("SELECT * FROM categories", (err, results) => {
@@ -156,7 +194,7 @@ app.get("/api/categories", (req, res) => {
 // Bir kategoriye ait alt kategoriler
 app.get("/api/getSubCategories", (req, res) => {
     var categoryId = req.query.kategori;
-    console.log("Category ID:", categoryId);
+    // console.log("Category ID:", categoryId);
     db.query("SELECT * FROM subcategories WHERE kategori_id = ?", [categoryId], (err, results) => {
         if (err) return res.status(500).json(err);
         res.json(results);
@@ -170,6 +208,74 @@ app.get("/api/products", (req, res) => {
         res.json(results);
     });
 });
+
+
+app.get("/api/getBrands", (req, res) => {
+    var brandsId = req.query.name;
+    console.log("Brands ID:", categoryId);
+    db.query("SELECT * FROM brands WHERE kategori_id = ?", [brandsId], (err, results) => {
+        if (err) return res.status(500).json(err);
+        res.json(results);
+    });
+});
+
+app.get("/api/brands", (req, res) => {
+    // const { subcategory_id } = req.query;
+    db.query("SELECT * FROM brands", (err, results) => {
+        if (err) return res.status(500).json(err);
+        res.json(results);
+    });
+});
+
+// MARKALARİ KATEGORİYE GÖRE GETİR
+app.get("/api/brands-by-category", (req, res) => {
+  const categoryId = req.query.categoryId;
+  if (!categoryId) {
+    return res.status(400).json({ message: "categoryId query parametresi gerekli" });
+  }
+
+  const sql = `
+    SELECT DISTINCT b.id, b.name
+    FROM brands b
+    JOIN products p      ON b.id = p.brand_id
+    JOIN subcategories s ON p.subcategory_id = s.id
+    WHERE s.kategori_id = ?
+  `;
+
+  db.query(sql, [categoryId], (err, results) => {
+    if (err) {
+      console.error("Markalar getirme hatası:", err);
+      return res.status(500).json({ message: "Sunucu hatası" });
+    }
+    res.json(results);
+  });
+});
+
+
+// app.get("/api/brands-by-products", (req, res) => {
+//   const productId = parseInt(req.query.productId, 10);
+//   if (!productId) {
+//     return res.status(400).json({ message: "productId query parametresi gerekli" });
+//   }
+
+//   // Tek sorguda; önce subcategories, sonra products, sonra brands
+//   const sql = `
+//     SELECT DISTINCT b.id, b.name
+//     FROM brands b
+//     JOIN products p       ON b.id = p.brand_id
+//     JOIN subcategories s  ON p.subcategory_id = s.id
+//     WHERE s.kategori_id = ?
+//   `;
+
+//   db.query(sql, [categoryId], (err, results) => {
+//     if (err) {
+//       console.error("Markalar getirme hatası:", err);
+//       return res.status(500).json({ message: "Sunucu hatası" });
+//     }
+//     res.json(results);
+//   });
+// });
+
 
 // Kategoriye ait tüm ürünler (alt kategorileri de dahil)
 app.get("/api/products-category", (req, res) => {
@@ -195,49 +301,108 @@ app.get("/api/products-category", (req, res) => {
 
 //ürün ekleme
 app.post("/api/products", (req, res) => {
-  const { name, price, stock, base64, subcategory_id, discount_type, discount_value, category } = req.body;
+  console.log("CREATE /api/products body:", req.body)
+  const {
+    name,
+    price,
+    stock,
+    base64,
+    subcategory_id,
+    brand_id,          // <— ekledik
+    discount_type,     // <— ekledik
+    discount_value,    // <— ekledik
+    discount_scope,    // <— ekledik eğer varsa
+    category
+  } = req.body;
 
-  if (!name || !price || !stock || !category) {
-    return res.status(400).json({ success: false, message: "Eksik bilgi var." });
+  // temel validasyon
+  if (!name || !price || !stock || !subcategory_id || !brand_id || !category) {
+    return res.status(400).json({ success: false, message: "Eksik zorunlu alan var." });
   }
 
   const sql = `
-    INSERT INTO products (name, price, stock, base64, subcategory_id, discount_type, discount_value, category)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO products
+      (name, price, stock, base64, subcategory_id, brand_id, discount_type, discount_value, discount_scope, category)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
-
-  db.query(sql, [name, price, stock, base64, subcategory_id, discount_type, discount_value, category], (err, result) => {
+  db.query(sql, [
+    name,
+    price,
+    stock,
+    base64 || null,
+    subcategory_id,
+    brand_id,
+    discount_type || "none",
+    discount_value || 0,
+    discount_scope || "product",
+    category
+  ], (err, result) => {
     if (err) {
-      console.error("Ürün ekleme hatası:", err); // Hata detayını konsola yazdır
+      console.error("Ürün ekleme hatası:", err);
       return res.status(500).json({ success: false, message: "Ürün eklenemedi", error: err.message });
     }
-    res.status(201).json({ success: true, message: "Ürün başarıyla eklendi", productId: result.insertId });
+    res.status(201).json({
+      success: true,
+      message: "Ürün başarıyla eklendi",
+      productId: result.insertId
+    });
   });
 });
-
 
 
 // Ürün güncelleme (id query parametre olarak geliyor)
 
 app.put("/api/products", (req, res) => {
-  const id = req.query.id;
-  const { name, price, stock, image_url, subcategory_id, discount_type, discount_value, category } = req.body;
+  // id’yi hem query’den hem de body’den yakalayalım
+  const id = req.body.id || req.query.id;
+  console.log("Güncelleme isteği geldi, id =", id, "body =", req.body);
 
   if (!id) {
     return res.status(400).json({ success: false, message: "ID belirtilmeli" });
   }
 
-  const sql = `
-    UPDATE products SET name=?, price=?, stock=?, image_url=?, subcategory_id=?, discount_type=?, discount_value=?, category=?
-    WHERE id=?
-  `;
+  const {
+    name, price, stock, brand_id,
+    discount_scope, base64 ,
+    subcategory_id, discount_type,
+    discount_value, category
+  } = req.body;
 
-  db.query(sql, [name, price, stock, image_url, subcategory_id, discount_type, discount_value, category, id], (err, result) => {
-    if (err) return res.status(500).json({ success: false, message: "Güncelleme başarısız" });
+  const sql = `
+    UPDATE products
+    SET
+      name            = ?,
+      brand_id        = ?,
+      discount_scope  = ?,
+      price           = ?,
+      stock           = ?,
+      base64       = ?,
+      subcategory_id  = ?,
+      discount_type   = ?,
+      discount_value  = ?,
+      category        = ?
+    WHERE id = ?
+  `;
+  const params = [
+    name, brand_id, discount_scope,
+    price, stock, base64 ,
+    subcategory_id, discount_type,
+    discount_value, category, id
+  ];
+  console.log("SQL params:", params);
+
+  db.query(sql, params, (err, result) => {
+    if (err) {
+      console.error("Güncelleme hatası:", err);       // ← Hata detayını burada göreceksin
+      return res.status(500).json({
+        success: false,
+        message: "Güncelleme sırasında sunucu hatası",
+        error: err.message                        // ← İstersen client’a da mesajı dönebilirsin
+      });
+    }
     res.json({ success: true, message: "Ürün başarıyla güncellendi" });
   });
 });
-
 // Ürün silme (id query parametre olarak geliyor)
 app.delete("/api/products", (req, res) => {
   const id = req.query.id;
@@ -271,26 +436,29 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 
 app.post("/api/addProduct", (req, res) => {
-  
-     const { name, price, stock, base64, subcategory_id, discount_type, discount_value, category } = req.body;
-
-  if (!name || !price || !stock || !category) {
-    return res.status(400).json({ success: false, message: "Eksik bilgi var." });
-  }
+  const {
+    name, price, stock, base64,
+    subcategory_id, discount_type, discount_value, discount_scope, category
+  } = req.body;
 
   const sql = `
-    INSERT INTO products (name, price, stock, base64, subcategory_id, discount_type, discount_value, category)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO products 
+      (name, price, stock, base64, subcategory_id, discount_type, discount_value, discount_scope, category)
+    VALUES (?,?,?,?,?,?,?,?,?)
   `;
-
-  db.query(sql, [name, price, stock, base64, subcategory_id, discount_type, discount_value, category], (err, result) => {
+  db.query(sql, [
+    name, price, stock, base64,
+    subcategory_id, discount_type, discount_value, discount_scope, category
+  ], (err, result) => {
     if (err) {
-      console.error("Ürün ekleme hatası:", err); // Hata detayını konsola yazdır
+      console.error("Ürün ekleme hatası:", err);
       return res.status(500).json({ success: false, message: "Ürün eklenemedi", error: err.message });
     }
+    // Başarılı ekleme → 201 + insertId dön
     res.status(201).json({ success: true, message: "Ürün başarıyla eklendi", productId: result.insertId });
   });
-     });
+});
+
    
 
      //CART API'leri (SEPET)
@@ -385,6 +553,58 @@ app.put("/api/cart", (req, res) => {
   );
 });
 
+// server.js içinde, CART API’lerinin altına ekle:
+app.post("/api/checkout", async (req, res) => {
+  const { userId, deliveryOption, paymentMethod, items, useMoney } = req.body;
+  // items = [{ productId, quantity, price }] 
+  // useMoney = puan/tutar kullanıldıysa (örneğin 50 ₺)
+
+  const conn = await db.promise().getConnection();
+  try {
+    await conn.beginTransaction();
+
+    // 1) orders tablosuna genel sipariş
+    const [orderRes] = await conn.query(
+      `INSERT INTO orders 
+        (user_id, delivery_option, payment_method, used_money, created_at)
+       VALUES (?, ?, ?, ?, NOW())`,
+      [userId, deliveryOption, paymentMethod, useMoney || 0]
+    );
+    const orderId = orderRes.insertId;
+
+    // 2) order_items ve stock güncelle
+    for (let it of items) {
+      const { productId, quantity, price } = it;
+      await conn.query(
+        `INSERT INTO order_items 
+           (order_id, product_id, quantity, unit_price)
+         VALUES (?, ?, ?, ?)`,
+        [orderId, productId, quantity, price]
+      );
+      await conn.query(
+        `UPDATE products SET stock = stock - ? WHERE id = ?`,
+        [quantity, productId]
+      );
+    }
+
+    // 3) money kesintisi varsa
+    if (useMoney > 0) {
+      await conn.query(
+        `UPDATE users SET money = money - ? WHERE id = ?`,
+        [useMoney, userId]
+      );
+    }
+
+    await conn.commit();
+    res.json({ success: true, orderId });
+  } catch (err) {
+    await conn.rollback();
+    console.error("Checkout hatası:", err);
+    res.status(500).json({ success: false, message: "Sipariş oluşturulamadı" });
+  } finally {
+    conn.release();
+  }
+});
 
 
 

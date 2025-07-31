@@ -35,23 +35,64 @@
               width="200px">
               <core:Item key="{id}" text="{ad}" />
             </Select>
+              <Select
+                items="{/brands}"
+                selectedKey="{/newProduct/brand_id}"
+                change="onBrandChange"
+                width="200px"
+                placeholder="Marka Seç">
+                <core:Item key="{id}" text="{name}" />
+                </Select>
+
+<!-- İndirim kapsamı: ürün bazlı mı, yoksa marka mı? -->
+<Select selectedKey="{/newProduct/discount_scope}" width="200px">
+  <core:Item key="product" text="Ürün Bazlı" />
+  <core:Item key="brand"   text="Marka Bazlı" />
+</Select>
+
+<!-- Mevcut indirim tipi ve değeri -->
+<Select selectedKey="{/newProduct/discount_type}" width="200px">
+  <core:Item key="none"      text="Yok" />
+  <core:Item key="percent"   text="Yüzde İndirimi" />
+  <core:Item key="amount"    text="Tutar İndirimi" />
+</Select>
+<Input
+  placeholder="İndirim Değeri"
+  type="Number"
+  value="{/newProduct/discount_value}"
+  width="200px" />
 
             <Input placeholder="Ürün Adı" value="{/newProduct/ad}" width="300px" />
             <Input placeholder="Fiyat" type="Number" value="{/newProduct/price}" width="300px" />
             <Input placeholder="Stok" type="Number" value="{/newProduct/stock}" width="300px" />
             <!-- İndirim Tipi -->
-            <Select selectedKey="{/newProduct/discount_type}" width="300px">
+            <!-- <Select selectedKey="{/newProduct/discount_type}" width="300px">
             <core:Item key="none" text="Yok" />
             <core:Item key="percent" text="Yüzde İndirim" />
             <core:Item key="amount" text="Tutar İndirimi" />
-            </Select>
+            </Select> -->
 
-            <Input placeholder="İndirim Değeri" type="Number" value="{/newProduct/discount_value}" width="300px" />
+            <!-- <Input placeholder="İndirim Değeri" type="Number" value="{/newProduct/discount_value}" width="300px" /> -->
+          
+          <unified:FileUploader
+  id="fileUploader"
+  change="onFileSelect"
+  fileType="jpg,png"
+  width="300px"
+/>
+<Image
+  id="previewImage"
+  visible="{= !!${/newProduct/image_url}}"
+  src="{/newProduct/image_url}"
+  width="200px"
+/>
+
+          
             <!-- görsel ekleme -->
-            <unified:FileUploader
+            <!-- <unified:FileUploader
               id="fileUploaderUpd" change="uploadFileForProduct"
               uploadUrl="" uploadComplete="onFileUploadComplete"/>
-            <Image id="previewImage" visible="false" width="200px" height="auto" />
+            <Image id="previewImage" visible="false" width="200px" height="auto" /> -->
 
             <Button text="Ürün Ekle" press="onUrunEkle" type="Emphasized" />
           </VBox>
@@ -72,10 +113,24 @@
           <List id="productList" items="{/productList}" growing="true" growingScrollToLoad="false">
       <CustomListItem>
         <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiSmallMargin" >
-          <VBox>
-            <Text text="{name}" class="sapUiTinyMarginBottom"/>
-            <Text text="{price} ₺ / Stok: {stock}" />
-          </VBox>
+         <VBox>
+      <Text text="{name}" class="sapUiTinyMarginBottom"/>
+
+      <!-- Sadece indirimi varsa eski fiyatı göster -->
+      <Text
+        text="{price} ₺"
+        wrapping="false"
+        visible="{= ${discount_type} !== 'none' }"
+        style="text-decoration: line-through; opacity:0.6;"
+        class="sapUiTinyMarginBottom" />
+
+      <!-- İndirimli fiyat (veya orijinal fiyat, type=none ise eşit olur) -->
+      <Text
+        text="{effectivePrice} ₺"
+        wrapping="false"
+        class="sapUiTinyMarginBottom"
+        design="Bold" />
+    </VBox>
           <HBox>
             <Button text="Güncelle" press="onEditProduct" data-product="{.}" class="sapUiTinyMarginEnd" />
             <Button text="Sil" press="onDeleteProduct" type="Reject" />
@@ -104,8 +159,22 @@
           <core:Item key="{id}" text="{ad}" />
         </Select>
 
-        <Label text="Ürün Adı" />
-        <Input value="{/editProduct/name}" />
+        <Text text="Marka" class="sapUiSmallMarginTop" />
+
+<!-- AFTER -->
+<!-- EDIT DIALOG içinde -->
+<Select
+  id="brandSelect" 
+  items="{/brands}"
+  selectedKey="{/editProduct/brand_id}"
+  change="onBrandChange"         
+  width="200px"
+  placeholder="Marka Seç">
+  <core:Item key="{id}" text="{name}" />
+</Select>
+
+          <Label text="Ürün Adı" />
+          <Input value="{/editProduct/name}" />
 
         <Label text="Fiyat" />
         <Input type="Number" value="{/editProduct/price}" />

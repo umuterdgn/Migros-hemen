@@ -19,10 +19,20 @@ sap.ui.define([
         includeStylesheet("css/style.css");
       });
 
-      // 3) Global cartModel
+      // 3) Global cart Model — badge ve buton için gerekli tüm property’ler
       var oCartModel = new JSONModel({
         cartItems: [],
-        summary: {}
+        summary: {
+          totalItems: 0,
+          subtotal: "0.00",
+          discount: "0.00",
+          total: "0.00"
+        },
+        // Sepetim butonunun başlangıç ayarları
+        buttonType: "Emphasized",
+        buttonIcon: "sap-icon://cart",
+        buttonText: "Sepetim",
+        badgeStyle: "Information"
       });
       this.setModel(oCartModel, "cartModel");
 

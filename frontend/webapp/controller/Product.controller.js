@@ -31,6 +31,7 @@ sap.ui.define(
         this.oModel = new JSONModel({
           view: {},
           subcategories: [],
+          brands: [],            
           UrunList: [],
           filteredProducts: [],
           displayedProducts: [],
@@ -44,15 +45,119 @@ sap.ui.define(
         });
         this.getView().setModel(this.oModel);
       },
+      _updateCartBadge: function () {
+  var oButton = this.byId("yourButtonId"); // ID kullanıyorsan
+  if (oButton) {
+    var oCartModel = this.getOwnerComponent().getModel("cartModel");
+    var iCount = oCartModel.getProperty("/items")?.length || 0;
+
+    const aCustomData = oButton.getCustomData();
+    aCustomData.forEach((oData) => {
+      if (oData.getKey() === "badge") {
+        oData.setValue(iCount.toString());
+      }
+    });
+  }
+},
+onSepeteSil: function(oEvt) {
+  // Fragment içindeki customData’dan id al
+  const sId = oEvt.getSource()
+    .getCustomData()
+    .find(d => d.getKey() === "id")
+    .getValue();
+
+  // Cart model’den ilgili ürünü çıkar
+  const oCartModel = this.getOwnerComponent().getModel("cartModel");
+  let aItems = oCartModel.getProperty("/cartItems") || [];
+  aItems = aItems.filter(i => i.id !== parseInt(sId,10));
+  oCartModel.setProperty("/cartItems", aItems);
+
+  // Özet ve listeyi yeniden güncelle
+  this._updateSummary(oCartModel);
+  this._renderProducts(this.oModel.getProperty("/displayedProducts"));
+},
+
+
 
       _onObjectMatched: function (oEvent) {
         const categoryId = oEvent.getParameter("arguments").categoryId;
         const categoryName = oEvent.getParameter("arguments").categoryName;
         this.oModel.setProperty("/view/categoryad", categoryName);
         this._loadSubcategories(categoryId);
+        this._loadBrands(categoryId);   
         this._loadProductsByCategory(categoryId);
       },
+loadProductList: function () {
+  var oModel = this.getView().getModel();
 
+  $.ajax({
+    url: "http://localhost:8081/api/products",
+    method: "GET",
+    success: function (data) {
+      // data bir dizi ürün: her biri { price, discount_type, discount_value, … }
+      data.forEach(function (p) {
+        let ep = p.price;
+        if (p.discount_type === "percent") {
+          ep = p.price * (1 - p.discount_value / 100);
+        } else if (p.discount_type === "amount") {
+          ep = p.price - p.discount_value;
+        }
+        // 2 ondalıkla sınırlandır ve modelde sakla
+        p.effectivePrice = ep.toFixed(2);
+      });
+      oModel.setProperty("/productList", data);
+    },
+    error: function () {
+      sap.m.MessageToast.show("Ürünler yüklenemedi.");
+    },
+  });
+},
+
+
+     _loadBrands: function (categoryId) {
+  $.ajax({
+    url: `http://localhost:8081/api/brands-by-category?categoryId=${categoryId}`,
+    method: "GET",
+    success: (data) => {
+      this.oModel.setProperty("/brands", data);
+      this._bindBrands();
+    },
+    error: (xhr) => {
+      console.error("Marka yükleme hatası:", xhr);
+      MessageToast.show("Markalar yüklenirken hata oluştu");
+    }
+  });
+},
+
+_bindBrands: function () {
+  const oBrandList = this.byId("brandList");
+  oBrandList.removeAllItems();
+  this.oModel.getProperty("/brands").forEach(brand => {
+    oBrandList.addItem(new sap.m.StandardListItem({
+      title: brand.name,
+      customData: [ new sap.ui.core.CustomData({ key: "brandId", value: brand.id }) ]
+    }));
+  });
+},
+
+onBrandSelect: function (oEvent) {
+  // seçili listItem’ları al
+  const selItems = this.byId("brandList").getSelectedItems();
+  const all = this.oModel.getProperty("/UrunList");
+  let filtered;
+
+  if (selItems.length > 0) {
+    // seçili ID’leri topla
+    const selectedIds = selItems.map(i => i.getCustomData()[0].getValue());
+    filtered = all.filter(p => selectedIds.includes(p.brand_id));
+  } else {
+    // hiç seçim yoksa, tüm ürünler
+    filtered = all;
+  }
+
+  this.oModel.setProperty("/filteredProducts", filtered);
+  this._paginate(1);
+},
       _loadSubcategories: function (categoryId) {
         $.get(
           `http://localhost:8081/api/getSubCategories?kategori=${categoryId}`,
@@ -92,25 +197,37 @@ sap.ui.define(
             "http://localhost:8081/api/products-category?categoryId=" + (categoryId),
           dataType: "json",
           method: "GET",
-        success: function (data) {
-  for (var i = 0; i < data.length; i++) {
-    data[i].src = "data:image/jpeg;base64," + data[i].base64;
+        success: function(data) {
+  data.forEach(item => {
+    // ham fiyat
+    const orig = parseFloat(item.price);
+    let discType, discVal;
 
-   
-    const originalPrice = parseFloat(data[i].price);
-    const discount = parseFloat(data[i].discount_value);
-
-    if (data[i].discount_type && data[i].discount_type !== "none") {
-      data[i].oldPrice = originalPrice.toFixed(2); // Çizgili gösterilecek
-      if (data[i].discount_type === "percentage" || data[i].discount_type === "rate") {
-        data[i].price = (originalPrice - originalPrice * (discount / 100)).toFixed(2);
-      } else if (data[i].discount_type === "fixed") {
-        data[i].price = (originalPrice - discount).toFixed(2);
-      }
+    if (item.discount_scope === "product") {
+      discType = item.discount_type;
+      discVal  = parseFloat(item.discount_value);
     } else {
-      data[i].oldPrice = null;
+      // marka bazlı
+      discType = item.brand_disc_type;
+      discVal  = parseFloat(item.brand_disc_value);
     }
-  }
+
+    // eski ve yeni fiyatı hesaplayalım
+    if (discType === "percent") {
+      item.oldPrice = orig.toFixed(2);
+      item.price = (orig * (1 - discVal/100)).toFixed(2);
+    } else if (discType === "amount") {
+      item.oldPrice = orig.toFixed(2);
+      item.price = (orig - discVal).toFixed(2);
+    } else {
+      item.oldPrice = null;
+      item.price = orig.toFixed(2);
+    }
+
+    // base64 → src
+    item.src = "data:image/jpeg;base64," + item.base64;
+  });
+
 
   // Model set işlemleri
   var oModel = new JSONModel();
@@ -176,8 +293,16 @@ sap.ui.define(
       _applyFilters: function () {
         const products = this.oModel.getProperty("/UrunList");
         this.oModel.setProperty("/filteredProducts", products);
-        this._paginate(1);
-      },
+
+         const selItems = this.byId("brandList").getSelectedItems();
+  if (selItems.length > 0) {
+    const ids = selItems.map(i => i.getCustomData()[0].getValue());
+    products = products.filter(p => ids.includes(p.brand_id));
+  }
+
+  this.oModel.setProperty("/filteredProducts", products);
+  this._paginate(1);
+},
 
       _paginate: function (page) {
         const all = this.oModel.getProperty("/filteredProducts");
@@ -213,7 +338,25 @@ stepInputLayout: function() {
 
     // Ürün görseli ve adı vs...
     oCard.addItem(new sap.m.Image({ src: product.src, width: "170px", height: "150px" }));
-    oCard.addItem(new sap.m.Text({ text: product.name }).addStyleClass("productName"));
+    oCard.addItem(
+  new sap.m.Text({
+    text: product.name
+  }).addStyleClass("productName")
+);
+    const oPriceBox = new sap.m.HBox({ alignItems: "Center", justifyContent: "Start" });
+
+if (product.oldPrice) {
+  oPriceBox.addItem(
+    new sap.m.Text({ text: product.oldPrice + " ₺" }).addStyleClass("oldPrice")
+  );
+}
+
+oPriceBox.addItem(
+  new sap.m.Text({ text: product.price + " ₺" }).addStyleClass("newPrice")
+);
+
+
+oCard.addItem(oPriceBox);
     // Fiyat gösterimi...
     // ...
 
@@ -344,7 +487,20 @@ onSepeteEkle: function (oProduct) {
       });
       var deliveryText = subtotal >= 200 ? "Ücretsiz" : (200 - subtotal).toFixed(2) + " ₺ eksik";
       var total = (subtotal - discount).toFixed(2);
-      oModel.setProperty("/summary", { totalItems: totalItems, subtotal: subtotal.toFixed(2), discount: discount.toFixed(2), deliveryText: deliveryText, total: total, message: subtotal < 200 ? "Sepete " + (200 - subtotal).toFixed(2) + " ₺ ekle, ücretsiz teslimat için." : "" });
+      oModel.setProperty("/summary", {
+    totalItems: totalItems,
+    subtotal: subtotal.toFixed(2),
+    discount: discount.toFixed(2),
+    total: total,
+    deliveryText: deliveryText
+    
+  });
+
+  const cartModel = this.getOwnerComponent().getModel("cartModel");
+  cartModel.setProperty("/summary", oModel.getProperty("/summary"));
+  
+  // (isteğe bağlı) Butonun text’ini toplam adete göre değiştirmek:
+  cartModel.setProperty("/buttonText", `Sepetim (${totalItems})`);
     },
       onNextPage: function () {
         const page = this.oModel.getProperty("/pagination/currentPage");
