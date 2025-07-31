@@ -38,41 +38,6 @@
 
       <!-- Sol sütun: teslimat & ödeme -->
       <VBox width="65%" fitContainer="true">
-        <Panel headerText="Teslimat Seçimi">
-          <VBox>
-            <Select
-              items="{
-                path: '/deliveryOptions' 
-              }"
-              selectedKey="{/checkout/deliveryOption}">
-              <core:Item key="{key}" text="{text}" />
-            </Select>
-          </VBox>
-        </Panel>
-
-        <Panel headerText="Ödeme Yöntemi" class="sapUiSmallMarginTop">
-          <VBox>
-            <Select
-              items="{
-                path: '/paymentMethods' 
-              }"
-              selectedKey="{/checkout/paymentMethod}">
-              <core:Item key="{key}" text="{text}" />
-            </Select>
-          </VBox>
-        </Panel>
-
-        <Panel headerText="Money Kullan" class="sapUiSmallMarginTop">
-          <HBox alignItems="Center" justifyContent="SpaceBetween">
-            <Text text="Mevcut Puanın: {/user/money} ₺"/>
-            <StepInput
-              value="{/checkout/useMoney}"
-              min="0"
-              max="{/user/money}"
-              liveChange=".onUseMoneyChange"/>
-          </HBox>
-        </Panel>
-
         <Button
           text="Siparişi Tamamla"
           type="Emphasized"

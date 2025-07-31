@@ -62,6 +62,11 @@
               "async": true
           },
           "routes": [
+            {
+          "name": "checkoutRoute",
+          "pattern": "checkout",
+          "target": "checkoutTarget"
+        },
               {
                   "pattern": "",
                   "name": "login",
@@ -107,6 +112,12 @@
                     "users": {
                     "viewName": "Users"
                 
+                },
+                "checkoutTarget": {
+                "viewName": "Checkout",
+                "viewLevel": 2,
+                "viewPath": "migros.view",
+                "type": "XML"
                 },
                 "cart": {
                     "viewName": "Cart",

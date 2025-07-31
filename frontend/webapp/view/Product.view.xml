@@ -62,7 +62,6 @@
           <ScrollContainer vertical="true" height="calc(100vh - 250px)">
             <HBox id="UrunList" wrap="Wrap" justifyContent="Start" alignItems="Start" class="productListContainer">
               <items>
-              
                  <Image width="100%" src="{src}" />
                   <Text text="{UrunList>name}" class="urunAdi sapUiSmallMarginBottom" />
                   <HBox justifyContent="Start" alignItems="Center" class="sapUiSmallMarginTop">
@@ -70,8 +69,6 @@
                     <Text text="{UrunList>price}" class="urunFiyat sapUiSmallMarginTop" />
                   </HBox>
                   <Button icon="sap-icon://cart" type="Emphasized" class="sepeteEkleIkon" press="onSepeteEkle" />
-
-                
               </items>
             </HBox>
           </ScrollContainer>
