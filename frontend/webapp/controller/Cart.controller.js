@@ -56,13 +56,26 @@ onStepInputChange: function(oEvt) {
       this._updateSummary(oModel);
     },
     _updateSummary: function (oModel) {
-      var aItems = oModel.getProperty("/cartItems") || [];
-      var subtotal = 0, discount = 0;
-      aItems.forEach(function (i) { subtotal += i.price * i.quantity; if (i.oldPrice) discount += (i.oldPrice - i.price) * i.quantity; });
-      var deliveryText = subtotal >= 200 ? "Ücretsiz" : (200 - subtotal).toFixed(2) + " ₺ eksik";
-      var total = (subtotal - discount).toFixed(2);
-      oModel.setProperty("/summary", { subtotal: subtotal.toFixed(2), discount: discount.toFixed(2), deliveryText: deliveryText, total: total });
-    },
+  var aItems = oModel.getProperty("/cartItems") || [];
+  var subtotal = 0;
+  // Sadece indirimli fiyat zaten price içinde geldiği için
+  aItems.forEach(function (i) {
+    subtotal += i.price * i.quantity;
+  });
+
+  var deliveryText = subtotal >= 200
+    ? "Ücretsiz"
+    : (200 - subtotal).toFixed(2) + " ₺ eksik";
+
+  // Artık ekstra indirim hesaplama yok
+  oModel.setProperty("/summary", {
+    subtotal:    subtotal.toFixed(2),
+    discount:    "0.00",              // istersen tamamen kaldırabilirsin
+    deliveryText: deliveryText,
+    total:       subtotal.toFixed(2)  // doğrudan subtotal
+  });
+},
+
     onCheckout: function () { this.getOwnerComponent().getRouter().navTo("checkoutRoute"); }
   });
 });

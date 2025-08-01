@@ -221,6 +221,7 @@ app.get("/api/getBrands", (req, res) => {
 
 app.get("/api/brands", (req, res) => {
     // const { subcategory_id } = req.query;
+    
     db.query("SELECT * FROM brands", (err, results) => {
         if (err) return res.status(500).json(err);
         res.json(results);
@@ -554,57 +555,178 @@ app.put("/api/cart", (req, res) => {
 });
 
 // server.js içinde, CART API’lerinin altına ekle:
-app.post("/api/checkout", async (req, res) => {
-  const { userId, deliveryOption, paymentMethod, items, useMoney } = req.body;
-  // items = [{ productId, quantity, price }] 
-  // useMoney = puan/tutar kullanıldıysa (örneğin 50 ₺)
+  
+// app.post("/api/checkout", async (req, res) => {
+//   const { userId, deliveryOption, paymentMethod, items, useMoney } = req.body;
+//   // items = [{ productId, quantity, price }] 
+//   // useMoney = puan/tutar kullanıldıysa (örneğin 50 ₺)
 
-  const conn = await db.promise().getConnection();
+//   const conn = await db.promise().getConnection();
+//   try {
+//     await conn.beginTransaction();
+
+//     // 1) orders tablosuna genel sipariş
+//     const [orderRes] = await conn.query(
+//       `INSERT INTO orders 
+//         (user_id, delivery_option, payment_method, used_money, created_at)
+//        VALUES (?, ?, ?, ?, NOW())`,
+//       [userId, deliveryOption, paymentMethod, useMoney || 0]
+//     );
+//     const orderId = orderRes.insertId;
+
+//     // 2) order_items ve stock güncelle
+//     for (let it of items) {
+//       const { productId, quantity, price } = it;
+//       await conn.query(
+//         `INSERT INTO order_items 
+//            (order_id, product_id, quantity, unit_price)
+//          VALUES (?, ?, ?, ?)`,
+//         [orderId, productId, quantity, price]
+//       );
+//       await conn.query(
+//         `UPDATE products SET stock = stock - ? WHERE id = ?`,
+//         [quantity, productId]
+//       );
+//     }
+
+//     // 3) money kesintisi varsa
+//     if (useMoney > 0) {
+//       await conn.query(
+//         `UPDATE users SET money = money - ? WHERE id = ?`,
+//         [useMoney, userId]
+//       );
+//     }
+
+//     await conn.commit();
+//     res.json({ success: true, orderId });
+//   } catch (err) {
+//     await conn.rollback();
+//     console.error("Checkout hatası:", err);
+//     res.status(500).json({ success: false, message: "Sipariş oluşturulamadı" });
+//   } finally {
+//     conn.release();
+//   }
+// });
+app.post("/api/orders", async (req, res) => {
+  const { userId, totalAmount, useMoneyPoints, items } = req.body;
+  const conn = db.promise();
+
   try {
+    // 0) Basit doğrulamalar
+    if (useMoneyPoints < 0) {
+      return res.status(400).json({ success: false, message: "Geçersiz puan kullanımı" });
+    }
+    // 0.1) Kullanıcının yeterli puanı var mı?
+    const [[u]] = await conn.execute(
+      "SELECT money_points FROM users WHERE id = ?",
+      [userId]
+    );
+    if (!u || u.money_points < useMoneyPoints) {
+      return res.status(400).json({ success: false, message: "Yetersiz para puanınız var." });
+    }
+
+    // 1) Transaction başlat
     await conn.beginTransaction();
 
-    // 1) orders tablosuna genel sipariş
-    const [orderRes] = await conn.query(
-      `INSERT INTO orders 
-        (user_id, delivery_option, payment_method, used_money, created_at)
-       VALUES (?, ?, ?, ?, NOW())`,
-      [userId, deliveryOption, paymentMethod, useMoney || 0]
+    // 2) Gerçek ödenecek tutarı düşelim
+    const netAmount = totalAmount - useMoneyPoints;
+    if (netAmount < 0) {
+      return res.status(400).json({ success: false, message: "Para puan toplamı aşamaz." });
+    }
+
+    // 3) Siparişi kaydet
+    const [orderResult] = await conn.execute(
+      `INSERT INTO orders (user_id, total_amount, order_date)
+       VALUES (?, ?, NOW())`,
+      [ userId, netAmount ]
     );
-    const orderId = orderRes.insertId;
+    const orderId = orderResult.insertId;
 
-    // 2) order_items ve stock güncelle
-    for (let it of items) {
-      const { productId, quantity, price } = it;
-      await conn.query(
-        `INSERT INTO order_items 
-           (order_id, product_id, quantity, unit_price)
+    // 4) Kalemler + stok güncelle
+    for (const it of items) {
+      await conn.execute(
+        `INSERT INTO order_items (order_id, product_id, quantity, unit_price)
          VALUES (?, ?, ?, ?)`,
-        [orderId, productId, quantity, price]
+        [ orderId, it.productId, it.quantity, it.price ]
       );
-      await conn.query(
+      await conn.execute(
         `UPDATE products SET stock = stock - ? WHERE id = ?`,
-        [quantity, productId]
+        [ it.quantity, it.productId ]
       );
     }
 
-    // 3) money kesintisi varsa
-    if (useMoney > 0) {
-      await conn.query(
-        `UPDATE users SET money = money - ? WHERE id = ?`,
-        [useMoney, userId]
+    // 5) Kullanılan para puanları düş
+    if (useMoneyPoints > 0) {
+      await conn.execute(
+        `UPDATE users
+           SET money_points = money_points - ?
+         WHERE id = ?`,
+        [ useMoneyPoints, userId ]
       );
     }
 
+    // 6) Commit
     await conn.commit();
     res.json({ success: true, orderId });
+
   } catch (err) {
     await conn.rollback();
-    console.error("Checkout hatası:", err);
-    res.status(500).json({ success: false, message: "Sipariş oluşturulamadı" });
-  } finally {
-    conn.release();
+    console.error("❌ /api/orders hata:", err);
+    res.status(500).json({ success: false, message: "Sipariş oluşturulamadı." });
   }
 });
+
+app.get("/api/users/:id", (req,res) => {
+  const id = parseInt(req.params.id,10);
+  db.query("SELECT money_points FROM users WHERE id = ?", [id], (err,rows) => {
+    if (err) return res.status(500).json({ success:false, message: "DB hatası"});
+    if (!rows.length) return res.status(404).json({ success:false, message: "Kullanıcı yok"});
+    res.json({ success:true, money_points: rows[0].money_points });
+  });
+});
+
+// order ve order_items tablolarınızın şu yapıda olduğunu varsayıyoruz:
+// orders(id, user_id, total_amount, order_date)
+// order_items(id, order_id, product_id, quantity, unit_price)
+
+// app.post("/api/orders", async (req, res) => {
+//   const { userId, totalAmount, items } = req.body;
+//   const conn = await db.promise().getConnection();
+
+//   try {
+//     await conn.beginTransaction();
+
+//     // 1) Siparişi kaydet
+//     const [orderResult] = await conn.query(
+//       `INSERT INTO orders (user_id, total_amount, order_date)
+//        VALUES (?, ?, NOW())`,
+//       [userId, totalAmount]
+//     );
+//     const orderId = orderResult.insertId;
+
+//     // 2) Kalemleri kaydet ve stoktan düş
+//     for (const it of items) {
+//       await conn.query(
+//         `INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+//          VALUES (?, ?, ?, ?)`,
+//         [orderId, it.productId, it.quantity, it.price]
+//       );
+//       await conn.query(
+//         `UPDATE products SET stock = stock - ? WHERE id = ?`,
+//         [it.quantity, it.productId]
+//       );
+//     }
+
+//     await conn.commit();
+//     res.json({ success: true, orderId });
+//   } catch (err) {
+//     await conn.rollback();
+//     console.error("Checkout hatası:", err);
+//     res.status(500).json({ success: false, message: "Sipariş oluşturulamadı." });
+//   } finally {
+//     conn.release();
+//   }
+// });
 
 
 

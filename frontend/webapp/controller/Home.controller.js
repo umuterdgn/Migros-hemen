@@ -505,13 +505,13 @@ onDialogBrandChange: function(oEvent) {
 
 
 // İndirim tipi değişince
-onDialogDiscountTypeChange: function(oEvent) {
+onDialogDiscountTypeChange: function (oEvent) {
   const sType = oEvent.getParameter("selectedItem").getKey();
   this.getView().getModel().setProperty("/editProduct/discount_type", sType);
 },
 
-// İndirim değeri liveChange
-onDialogDiscountValueChange: function(oEvent) {
+// İndirim değeri liveChange olduğunda
+onDialogDiscountValueChange: function (oEvent) {
   const fValue = parseFloat(oEvent.getParameter("value")) || 0;
   this.getView().getModel().setProperty("/editProduct/discount_value", fValue);
 },

@@ -121,8 +121,7 @@
         text="{price} ₺"
         wrapping="false"
         visible="{= ${discount_type} !== 'none' }"
-        style="text-decoration: line-through; opacity:0.6;"
-        class="sapUiTinyMarginBottom" />
+        class="sapUiTinyMarginBottom lineThroughText" />
 
       <!-- İndirimli fiyat (veya orijinal fiyat, type=none ise eşit olur) -->
       <Text
@@ -182,8 +181,27 @@
         <Label text="Stok" />
         <Input type="Number" value="{/editProduct/stock}" />
 
-        <Label text="İndirim" />
-        <Input type="Number" value="{/editProduct/discount_value}" />
+       <Label text="İndirim Tipi" />
+<Label text="İndirim Tipi" />
+<Select
+  id="editDiscountType"
+  selectedKey="{/editProduct/discount_type}"
+  change="onDialogDiscountTypeChange"
+  width="200px">
+  <core:Item key="none"    text="Yok" />
+  <core:Item key="percent" text="Yüzde İndirimi" />
+  <core:Item key="amount"  text="Tutar İndirimi" />
+</Select>
+
+<Label text="İndirim Değeri" class="sapUiSmallMarginTop" />
+<Input
+  id="editDiscountValue"
+  type="Number"
+  liveChange="onDialogDiscountValueChange"
+  value="{/editProduct/discount_value}"
+  width="200px"
+  placeholder="0" />
+
 
         <Label text="Görsel (Base64)" />
         <unified:FileUploader change="onEditFileChange" fileType="jpg,png" />

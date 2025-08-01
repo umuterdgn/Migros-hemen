@@ -65,7 +65,7 @@
             {
           "name": "checkoutRoute",
           "pattern": "checkout",
-          "target": "checkoutTarget"
+          "target": "checkout"
         },
               {
                   "pattern": "",
@@ -113,12 +113,10 @@
                     "viewName": "Users"
                 
                 },
-                "checkoutTarget": {
+                "checkout": {
                 "viewName": "Checkout",
-                "viewLevel": 2,
-                "viewPath": "migros.view",
-                "type": "XML"
-                },
+                "viewPath": "migros.view"
+                    },
                 "cart": {
                     "viewName": "Cart",
                    "viewPath": "migros.view" ,

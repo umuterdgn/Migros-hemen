@@ -4,14 +4,14 @@
   xmlns="sap.m"
   xmlns:core="sap.ui.core"
   displayBlock="true">
-  
   <Page title="Sipariş Oluştur" class="sapUiContentPadding">
     <HBox justifyContent="SpaceBetween" wrap="Wrap">
 
       <!-- Sağ sütun: sipariş özeti -->
-      <VBox width="30%" class="sapUiSmallMarginBegin">
+      <VBox width="40%" class="sapUiSmallMarginBegin">
         <Panel headerText="Sepet Özeti">
           <VBox>
+
             <HBox justifyContent="SpaceBetween">
               <Text text="Ürünler:"/>
               <Text text="{cartModel>/summary/totalItems} adet"/>
@@ -29,21 +29,56 @@
               <Text text="{cartModel>/summary/deliveryText}"/>
             </HBox>
             <HBox justifyContent="SpaceBetween" class="sapUiSmallMarginTop">
-              <Text design="Bold" text="Genel Toplam:"/>
-              <Text design="Bold" text="{cartModel>/summary/total} ₺"/>
+              <Text text="Genel Toplam:" class="sapMTextBold"/>
+              <Text text="{cartModel>/summary/total} ₺" class="sapMTextBold"/>
             </HBox>
+
           </VBox>
         </Panel>
+
+        <!-- Para Puan Bölümü -->
+        <VBox class="sapUiSmallMarginTop">
+          <Text text="Para Puan" class="sapMTextBold"/>
+
+          <HBox justifyContent="SpaceBetween">
+            <Text text="Mevcut Puan:"/>
+            <Text text="{checkoutModel>/moneyPoints} ₺"/>
+          </HBox>
+
+          <HBox justifyContent="SpaceBetween">
+            <Text text="Kullanılacak Puan:"/>
+            <Input
+              value="{checkoutModel>/usePoints}"
+              valueLiveUpdate="true"
+              type="Number"
+              placeholder="0"
+              liveChange="onMoneyPointsChange"
+              class="sapUiSizeCompact"/>
+          </HBox>
+
+          <HBox justifyContent="SpaceBetween">
+            <Text text="Kalan Puan:"/>
+            <Text text="{checkoutModel>/remainingPoints} ₺"/>
+          </HBox>
+
+          <Button
+            text="Para Puan Uygula"
+            type="Emphasized"
+            press="onUseMoneyPoints"
+            enabled="{= ${checkoutModel>/usePoints} > 0 }"
+            class="sapUiSmallMarginTop"/>
+        </VBox>
+
       </VBox>
 
-      <!-- Sol sütun: teslimat & ödeme -->
-      <VBox width="65%" fitContainer="true">
+      <!-- Sol sütun: onay butonu -->
+      <VBox width="55%" fitContainer="true">
         <Button
           text="Siparişi Tamamla"
           type="Emphasized"
-          class="sapUiSmallMarginTop"
           press="onPlaceOrder"
-          enabled="{= ${cartModel>/summary/total} > 0 }"/>
+          enabled="{= ${cartModel>/summary/total} > 0 }"
+          class="sapUiSmallMarginTop"/>
       </VBox>
 
     </HBox>

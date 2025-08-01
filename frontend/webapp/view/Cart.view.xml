@@ -11,35 +11,75 @@
       
       <!-- Sol sütun: ürün listesi -->
       <VBox width="65%" fitContainer="true">
-        <List
-          items="{cartModel>/cartItems}"
-          updateFinished="onListUpdateFinished"
-          class="sapUiSmallMarginBottom"
-          inset="false">
-          <items>
-            <CustomListItem>
-              <HBox justifyContent="SpaceBetween" alignItems="Center">
-                
-                <Image
-                  src="{cartModel>src}"
-                  width="80px"
-                  height="80px"/>
-                
-                <Text text="{cartModel>name}"/>
+      <List
+  items="{cartModel>/cartItems}"
+  class="sapUiSmallMarginBottom"
+  inset="false">
 
-                <!-- StepInput fragment -->
-                <core:Fragment
-                  fragmentName="migros.view.fragments.StepInput"
-                  type="XML"/>
+  <items>
+ <CustomListItem>
+  <HBox
+    justifyContent="Start"
+    alignItems="Center"
+    class="sapUiSmallMargin">
 
-                <Button
-                  icon="sap-icon://delete"
-                  press="onDeleteItem"
-                  customData="{key:'id',value:'{cartModel>id}'}"/>
-              </HBox>
-            </CustomListItem>
-          </items>
-        </List>
+    <!-- 1) Ürün Görselü -->
+    <Image
+      src="{cartModel>src}"
+      width="80px"
+      height="80px"
+      class="sapUiSmallMarginEnd" />
+
+    <!-- 2) Ürün Adı + Sil (solda sabit) -->
+    <VBox
+      width="200px"
+      class="sapUiSmallMarginEnd">
+      <Text
+        text="{cartModel>name}"
+        class="sapUiMediumMarginBottom" />
+      <Button
+        icon="sap-icon://delete"
+        text="Kaldır"
+        type="Transparent"
+        press="onDeleteItem">
+        <customData>
+          <core:CustomData
+            key="id"
+            value="{cartModel>id}" />
+        </customData>
+      </Button>
+    </VBox>
+
+    <!-- 3) Esnek boşluk -->
+    <VBox>
+      <layoutData>
+        <FlexItemData growFactor="1" />
+      </layoutData>
+    </VBox>
+
+    <!-- 4) Fiyatlar ve StepInput (en sağda) -->
+    <VBox class="sapUiAlignItemsEnd">
+      <Text
+        text="{cartModel>oldPrice} ₺"
+        visible="{= !!${cartModel>oldPrice} }"
+        class="sapUiTinyMarginBottom lineThroughText" />
+      <Text
+        text="{cartModel>price} ₺"
+        design="Bold"
+        class="sapUiTinyMarginBottom" />
+      <core:Fragment
+        fragmentName="migros.view.fragments.StepInput"
+        type="XML" />
+    </VBox>
+
+  </HBox>
+</CustomListItem>
+
+
+  </items>
+</List>
+
+
       </VBox>
 
       <!-- Sağ sütun: sepet özeti -->
