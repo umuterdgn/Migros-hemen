@@ -30,6 +30,7 @@ sap.ui.define(
   subcategories: [],
   brands: []                 // <- brands dizisini ekleyin
 });
+oModel.setSizeLimit(1000); 
         this.getView().setModel(oModel);
         $.ajax({
   url: "http://localhost:8081/api/brands",
@@ -253,12 +254,12 @@ onSubCategoryChange: function(oEvent) {
   const oModel = this.getView().getModel();
   oModel.setProperty("/newProduct/subcategory_id", subId);
 
- $.ajax({
-  url: "http://localhost:8081/api/brands",
-  method: "GET",
-  success: data => oModel.setProperty("/brands", data),
-  error: () => MessageToast.show("Markalar yüklenemedi")
-});
+  //  $.ajax({
+  //   url: "http://localhost:8081/api/brands",
+  //   method: "GET",
+  //   success: data => oModel.setProperty("/brands", data),
+  //   error: () => MessageToast.show("Markalar yüklenemedi")
+  // });
 
 
 },

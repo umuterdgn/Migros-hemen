@@ -62,52 +62,75 @@ sap.ui.define([
     },
 
     onPlaceOrder() {
-      var oCartModel  = this.getOwnerComponent().getModel("cartModel");
-      var aItems      = oCartModel.getProperty("/cartItems");
-      var summary     = oCartModel.getProperty("/summary");
-      var oCM         = this.getView().getModel("checkoutModel");
-      var userId      = 1;
+  var oCartModel  = this.getOwnerComponent().getModel("cartModel");
+  var aItems      = oCartModel.getProperty("/cartItems");
+  var summary     = oCartModel.getProperty("/summary");
+  var oCM         = this.getView().getModel("checkoutModel");
+  var userId      = 1;
 
-      // yüklenen puanı de payload’a ekle
-      var payload = {
-        userId, 
-        totalAmount: parseFloat(summary.total),
-        useMoneyPoints: oCM.getProperty("/usePoints"),
-        items: aItems.map(i => ({
-          productId: i.id,
-          quantity:  i.quantity,
-          price:     i.price
-        }))
-      };
+  var payload = {
+    userId, 
+    totalAmount: parseFloat(summary.total),
+    useMoneyPoints: oCM.getProperty("/usePoints"),
+    items: aItems.map(i => ({
+      productId: i.id,
+      quantity:  i.quantity,
+      price:     i.price
+    }))
+  };
 
-      jQuery.ajax({
-        url:    "http://localhost:8081/api/orders",
-        method: "POST",
-        contentType: "application/json",
-        data:  JSON.stringify(payload),
-        success: (res) => {
-          if (res.success) {
-            MessageToast.show("Sipariş alındı! ID: " + res.orderId);
-            // temizle
-            oCartModel.setProperty("/cartItems", []);
-            oCartModel.setProperty("/summary", {
-              totalItems:     0,
-              subtotal:       "0.00",
-              discount:       "0.00",
-              deliveryText:   "",
-              total:          "0.00"
-            });
-            oCM.setProperty("/usePoints",       0);
-            oCM.setProperty("/remainingPoints", oCM.getProperty("/moneyPoints"));
-            this.getOwnerComponent().getRouter().navTo("home");
-          } else {
-            MessageToast.show("Sipariş başarısız: " + res.message);
+  jQuery.ajax({
+    url: "http://localhost:8081/api/orders",
+    method: "POST",
+    contentType: "application/json",
+    data: JSON.stringify(payload),
+    success: (res) => {
+      if (res.success) {
+        MessageToast.show("Sipariş alındı! ID: " + res.orderId);
+
+        // ✅ Money point kazanımı: toplam tutarın yarısı kadar puan geri ekle
+        const earnedPoints = Math.floor(payload.totalAmount / 2); // İstersen küsuratlı kalsın: parseFloat(... / 2).toFixed(2)
+        jQuery.ajax({
+          url: `http://localhost:8081/api/users/${userId}/earn-points`,
+          method: "PUT",
+          contentType: "application/json",
+          data: JSON.stringify({ points: earnedPoints }),
+          success: () => {
+            MessageToast.show(earnedPoints + " ₺ para puan kazandınız.");
+            const currentPoints = oCM.getProperty("/moneyPoints") || 0;
+const newPoints = currentPoints + earnedPoints;
+oCM.setProperty("/moneyPoints", newPoints);
+oCM.setProperty("/remainingPoints", newPoints);
+          },
+          error: () => {
+            MessageToast.show("Para puan eklenemedi.");
           }
-        },
-        error: () => {
-          MessageToast.show("Sunucu hatası, tekrar deneyin.");
-        }
+        });
+
+        // sepet ve modelleri temizle
+        oCartModel.setProperty("/cartItems", []);
+        oCartModel.setProperty("/summary", {
+          totalItems:     0,
+          subtotal:       "0.00",
+          discount:       "0.00",
+          deliveryText:   "",
+          total:          "0.00"
+        });
+        oCM.setProperty("/usePoints", 0);
+        oCM.setProperty("/remainingPoints", oCM.getProperty("/moneyPoints"));
+        this.getOwnerComponent().getRouter().navTo("home");
+
+      } else {
+        MessageToast.show("Sipariş başarısız: " + res.message);
+      }
+    },
+    error: () => {
+      MessageToast.show("Sunucu hatası, tekrar deneyin.");
+    }
+
+
       });
+      
     }
   });
 });

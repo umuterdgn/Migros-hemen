@@ -221,7 +221,6 @@ app.get("/api/getBrands", (req, res) => {
 
 app.get("/api/brands", (req, res) => {
     // const { subcategory_id } = req.query;
-    
     db.query("SELECT * FROM brands", (err, results) => {
         if (err) return res.status(500).json(err);
         res.json(results);
@@ -684,6 +683,19 @@ app.get("/api/users/:id", (req,res) => {
     res.json({ success:true, money_points: rows[0].money_points });
   });
 });
+
+// PUT /api/users/:id/earn-points
+app.put("/api/users/:id/earn-points", (req, res) => {
+  const userId = req.params.id;
+  const { points } = req.body;
+
+  const query = `UPDATE users SET money_points = money_points + ? WHERE id = ?`;
+  db.query(query, [points, userId], (err, result) => {
+    if (err) return res.status(500).json({ success: false, message: "DB error" });
+    return res.json({ success: true });
+  });
+});
+
 
 // order ve order_items tablolarınızın şu yapıda olduğunu varsayıyoruz:
 // orders(id, user_id, total_amount, order_date)
