@@ -23,6 +23,9 @@ sap.ui.define(
 
     return Controller.extend("migros.controller.Product", {
       onInit: function () {
+        if (!this.getView().getModel("cartModel")) {
+  this.getView().setModel(this.getOwnerComponent().getModel("cartModel"), "cartModel");
+}
         this.oRouter = this.getOwnerComponent().getRouter();
         this.oRouter
           .getRoute("productRoute")
@@ -41,9 +44,17 @@ sap.ui.define(
             itemsPerPage: 30,
             hasNext: false,
             hasPrev: false,
+            
           },
-        });
+          
+          
+        });var oCartBtn = this.byId("btnCart");
+  // if (oCartBtn) {
+  //   oCartBtn.attachBrowserEvent("mouseover", this.onCartHover.bind(this));
+  // }
+        
         this.getView().setModel(this.oModel);
+
       },
       _updateCartBadge: function () {
   var oButton = this.byId("yourButtonId"); // ID kullanıyorsan
@@ -59,6 +70,16 @@ sap.ui.define(
     });
   }
 },
+// onAfterRendering: function() {
+//   if (!this._bHoverAttached) {
+//     var oCartBtn = this.byId("btnCart");
+//     if (oCartBtn) {
+//       oCartBtn.attachBrowserEvent("mouseover", this.onCartHover.bind(this));
+//       this._bHoverAttached = true;
+//     }
+//   }
+// },
+
 onSepeteSil: function(oEvt) {
   // Fragment içindeki customData’dan id al
   const sId = oEvt.getSource()
@@ -128,6 +149,99 @@ loadProductList: function () {
     }
   });
 },
+onCartHover: function() {
+  var oButton = this.byId("btnCart");
+  if (!this._cartPopover) {
+    Fragment.load({
+      name: "migros.view.fragments.CartPopover",
+      controller: this
+    }).then(function(oPopover) {
+      this._cartPopover = oPopover;
+      this.getView().addDependent(oPopover);
+      oPopover.openBy(oButton);
+    }.bind(this));
+  } else {
+    this._cartPopover.openBy(oButton);
+  }
+},
+
+onAfterRendering: function() {
+  if (!this._bHoverAttached) {
+    var oCartBtn = this.byId("btnCart");
+    if (oCartBtn) {
+      oCartBtn.attachBrowserEvent("mouseover", this.onCartHover.bind(this));
+      this._bHoverAttached = true;
+    }
+   var oSearchField = this.byId("searchField");
+if (oSearchField) {
+  oSearchField.addEventDelegate({
+    onAfterRendering: function () {
+      const el = oSearchField.getDomRef();
+      if (el) {
+        // En dış kapsayıcı
+        // el.style.borderRadius = "2rem";
+        // el.style.boxShadow = "0 2px 6px rgba(0,0,0,0.1)";
+        // el.style.border = "0.2px solid #ccc";
+        
+      }
+
+      // İç wrapper (div)
+      const innerDiv = el.querySelector(".sapMSFF");
+      if (innerDiv) {
+        innerDiv.style.borderRadius = "1rem";
+        innerDiv.style.overflow = "hidden";
+        innerDiv.style.border = "1px solid #ccc";
+
+      }
+
+      // Input alanı
+      const input = el.querySelector("input");
+      if (input) {
+        input.style.borderRadius = "2rem";
+      }
+
+      // Search ikonu olan buton
+      const btn = el.querySelector("button");
+      if (btn) {
+        btn.style.borderRadius = "1rem";
+      }
+      
+    }
+    
+  });
+}
+  }
+},
+
+
+
+onPopoverAfterOpen: function() {
+  var oPopover = this._cartPopover;
+  var $pop = oPopover.$();           // Popover’ın jQuery nesnesi
+  var that = this;
+
+  // Fare popover’a girince kapanmayı durdur
+  $pop.on("mouseenter", function() {
+    clearTimeout(that._popCloseTimeout);
+  });
+
+  // Fare popover’dan çıkınca, 300ms sonra kapat
+  $pop.on("mouseleave", function() {
+    that._popCloseTimeout = setTimeout(function() {
+      oPopover.close();
+    }, 300);
+  });
+},
+
+
+onPopoverAfterClose: function() {
+  var oPopover = this._cartPopover;
+  var $pop = oPopover.$();
+  // Olayları temizle
+  $pop.off("mouseenter mouseleave");
+  clearTimeout(this._popCloseTimeout);
+},
+
 
 _bindBrands: function () {
   const oBrandList = this.byId("brandList");
@@ -325,104 +439,106 @@ stepInputLayout: function() {
   return new sap.m.FlexItemData({ growFactor: 0, shrinkFactor: 0 });
 }
 ,
-     _renderProducts: function (items) {
-  const oBox = this.byId("UrunList");
-  const oCartModel = this.getOwnerComponent().getModel("cartModel");
-  let aCartItems = oCartModel.getProperty("/cartItems") || [];
+_renderProducts: function (items) {
+  const oBox      = this.byId("UrunList");
+  const oCartModel= this.getOwnerComponent().getModel("cartModel");
+  let aCartItems  = oCartModel.getProperty("/cartItems") || [];
 
   oBox.removeAllItems();
 
   items.forEach((product) => {
-    // Kart container
-    const oCard = new sap.m.VBox({}).addStyleClass("productBox");
+    const oCard = new sap.m.VBox().addStyleClass("productBox");
 
-    // Ürün görseli ve adı vs...
-    oCard.addItem(new sap.m.Image({ src: product.src, width: "170px", height: "150px" }));
-    oCard.addItem(
-  new sap.m.Text({
-    text: product.name
-  }).addStyleClass("productName")
-);
+    // --- 1) ÜRÜN GÖRSELİ ---
+    oCard.addItem(new sap.m.Image({
+      src:      product.src,     // modeldeki data:image… değeri
+      width:    "170px",
+      height:   "150px",
+      decorative: false
+    }));
+
+    // --- 2) ÜRÜN ADI ---
+    oCard.addItem(new sap.m.Text({
+      text: product.name
+    }).addStyleClass("productName"));
+
+    // --- 3) FİYATLAR ---
     const oPriceBox = new sap.m.HBox({ alignItems: "Center", justifyContent: "Start" });
+    if (product.oldPrice) {
+      oPriceBox.addItem(new sap.m.Text({
+        text: product.oldPrice + " ₺"
+      }).addStyleClass("oldPrice"));
+    }
+    oPriceBox.addItem(new sap.m.Text({
+      text: product.price + " ₺"
+    }).addStyleClass("newPrice"));
+    oCard.addItem(oPriceBox);
 
-if (product.oldPrice) {
-  oPriceBox.addItem(
-    new sap.m.Text({ text: product.oldPrice + " ₺" }).addStyleClass("oldPrice")
-  );
-}
-
-oPriceBox.addItem(
-  new sap.m.Text({ text: product.price + " ₺" }).addStyleClass("newPrice")
-);
-
-
-oCard.addItem(oPriceBox);
-    // Fiyat gösterimi...
-    // ...
-
-    // Action alanı: HBox içine ya SepeteEkle butonu ya StepInput+Sil butonu gelecek
+    // --- 4) SEPETE EKLE / STEPINPUT + SİL ---
     const oActionHBox = new sap.m.HBox({ alignItems: "Center", justifyContent: "Start" });
-
-    // Sepette var mı kontrol et
     const oInCart = aCartItems.find(item => item.id === product.id);
 
     if (!oInCart) {
-      // Henüz sepette değil: sepete ekle butonu
       oActionHBox.addItem(new sap.m.Button({
         icon: "sap-icon://cart",
-        type: "Emphasized",
-        press: this.onSepeteEkle.bind(this, product)
+        type: sap.m.ButtonType.Emphasized,
+        press: this.onSepeteEkle.bind(this, product),
+        customData: [
+          new sap.ui.core.CustomData({ key: "hasLimit", value: product.has_limit }),
+          new sap.ui.core.CustomData({ key: "limitQty", value: product.limit_qty })
+        ]
       }).addStyleClass("sepeteEkleIkon"));
-      oCard.addItem(oActionHBox);
     } else {
-      // Sepette var: StepInput fragment + sil butonu
-      // İlk önce fragment’i yükle ve konteks ile bind et
       Fragment.load({
         name: "migros.view.fragments.StepInput",
         controller: this
       }).then(function(oStepInput) {
-        // bağlama: cartModel'de oInCart'ın index'ine
+        oStepInput
+          .addCustomData(new sap.ui.core.CustomData({ key: "hasLimit", value: product.has_limit }))
+          .addCustomData(new sap.ui.core.CustomData({ key: "limitQty", value: product.limit_qty }));
         const iIndex = aCartItems.indexOf(oInCart);
         oStepInput.setBindingContext(
           new sap.ui.model.Context(oCartModel, "/cartItems/" + iIndex),
           "cartModel"
         );
-        // change event Product için farklı handler
         oStepInput.attachChange(this.onProductStepChange.bind(this));
         oActionHBox.addItem(oStepInput);
 
-        // Sil butonu
         oActionHBox.addItem(new sap.m.Button({
           icon: "sap-icon://delete",
           press: () => this._removeFromCart(product.id)
         }));
       }.bind(this));
-
-      oCard.addItem(oActionHBox);
     }
 
+    oCard.addItem(oActionHBox);
     oBox.addItem(oCard);
   });
 },
 
+
 onProductStepChange: function(oEvt) {
-  const iNewQty = oEvt.getParameter("value");
-  const sId = oEvt.getSource().getCustomData()[0].getValue();
-  const oCartModel = this.getOwnerComponent().getModel("cartModel");
-  let a = oCartModel.getProperty("/cartItems");
-  let oItem = a.find(i => i.id === sId);
-  if (oItem) {
-    if (iNewQty <= 0) {
-      // Sıfırlandıysa sepetten çıkar
-      this._removeFromCart(sId);
-    } else {
-      // Aksi halde miktarı güncelle ve özet + ürünleri yeniden render et
-      oItem.quantity = iNewQty;
-      oCartModel.refresh();
-      this._updateSummary(oCartModel);
-    }
+  const oStep    = oEvt.getSource();
+  const iNewQty  = oEvt.getParameter("value");
+  // customData’dan oku
+  const hasLimit = oStep.getCustomData()
+                        .find(cd => cd.getKey() === "hasLimit").getValue();
+  const limitQty = oStep.getCustomData()
+                        .find(cd => cd.getKey() === "limitQty").getValue();
+
+  if (hasLimit && iNewQty > limitQty) {
+    MessageToast.show(`Maksimum ${limitQty} adet ile sınırlısınız.`);
+    oStep.setValue(limitQty);
+    return;
   }
+
+  // Model’deki quantity’yi güncelle
+  const oCartModel = this.getOwnerComponent().getModel("cartModel");
+  const sPath      = oStep.getBindingContext("cartModel").getPath(); // örn "/cartItems/2"
+  oCartModel.setProperty(sPath + "/quantity", iNewQty);
+  this._updateSummary(oCartModel);
 },
+
 _removeFromCart: function(sId) {
   const oCartModel = this.getOwnerComponent().getModel("cartModel");
   let a = oCartModel.getProperty("/cartItems") || [];
@@ -455,13 +571,24 @@ onNavBack: function () {
   window.history.back();
 },
 // Ürünü sepete ekle butonuna basıldığında
-onSepeteEkle: function (oProduct) {
-  // oProduct artık direkt closure’dan geliyor, getSource falan yok
-  var oCartModel = this.getOwnerComponent().getModel("cartModel");
-  var aCartItems = oCartModel.getProperty("/cartItems") || [];
-  var existing = aCartItems.find(item => item.id === oProduct.id);
+onSepeteEkle: function(oProduct) {
+  // customData’dan oku
+  const hasLimit = oProduct.has_limit;
+  const limitQty = oProduct.limit_qty;
+
+  const oCartModel = this.getOwnerComponent().getModel("cartModel");
+  let aCartItems   = oCartModel.getProperty("/cartItems") || [];
+  let existing     = aCartItems.find(i => i.id === oProduct.id);
+  let newQty       = existing ? existing.quantity + 1 : 1;
+
+  if (hasLimit && newQty > limitQty) {
+    MessageToast.show(`Bu üründen en fazla ${limitQty} adet alabilirsiniz.`);
+    return;
+  }
+
+  // normal sepete ekleme mantığı
   if (existing) {
-    existing.quantity += 1;
+    existing.quantity = newQty;
   } else {
     aCartItems.push({
       id:       oProduct.id,
@@ -474,9 +601,12 @@ onSepeteEkle: function (oProduct) {
   }
   oCartModel.setProperty("/cartItems", aCartItems);
   this._updateSummary(oCartModel);
+  this._renderProducts(this.oModel.getProperty("/displayedProducts"));
   MessageToast.show(oProduct.name + " sepete eklendi");
-   this._renderProducts(this.oModel.getProperty("/displayedProducts"));
+  
 },
+
+
     _updateSummary: function (oModel) {
       var aItems = oModel.getProperty("/cartItems") || [];
       var totalItems = 0, subtotal = 0, discount = 0;

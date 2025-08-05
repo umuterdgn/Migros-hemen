@@ -644,3 +644,24 @@
   border-radius: 50%;
   padding: 2px 5px;
 }
+/* cartButton içindeki badge’i ikonun tam üstüne taşıyalım */
+.cartButton .sapMBadge {
+  position: absolute;      /* ikonun üzerine gelecek */
+  top: -6px;               /* dikeyde biraz yukarı */
+  right: -6px;             /* yatayda biraz sağa */
+  background-color: #e74c3c; /* kırmızı ton */
+  color: #fff;             /* beyaz metin */
+  min-width: 20px;         /* en az genişlik */
+  height: 20px;            /* yükseklik */
+  line-height: 20px;       /* dikey ortalama */
+  padding: 0 4px;          /* soldan sağa boşluk */
+  border-radius: 50%;      /* daire şekli */
+  font-size: 0.75rem;      /* küçük sayı boyutu */
+  text-align: center;      /* ortalı sayı */
+  box-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+
+/* opsiyonel: buton hover efekti */
+.cartButton:hover .sapMBadge {
+  background-color: #c0392b;
+}

@@ -139,21 +139,30 @@ app.get("/api/brands-by-subcategory", (req, res) => {
 
 app.get("/api/products-category", (req, res) => {
   const categoryId = req.query.categoryId;
+  if (!categoryId) {
+    return res.status(400).json({ message: "categoryId query parametresi gerekli" });
+  }
   const sql = `
-    SELECT 
-      p.*, b.name AS brand_name,
-      b.discount_type AS brand_disc_type,
-      b.discount_value AS brand_disc_value
+    SELECT
+      p.*,
+      p.has_limit,
+      p.limit_qty,
+      b.name            AS brand_name,
+      b.discount_type   AS brand_disc_type,
+      b.discount_value  AS brand_disc_value
     FROM products p
     JOIN brands b ON p.brand_id = b.id
     WHERE p.category = ?
   `;
   db.query(sql, [categoryId], (err, rows) => {
-    if (err) return res.status(500).json(err);
-    // client’a ham veriyi gönderiyoruz; price hesaplamasını UI’da yapacağız
+    if (err) {
+      console.error("Veritabanı hatası:", err);
+      return res.status(500).json({ error: "Veritabanı hatası" });
+    }
     res.json(rows);
   });
 });
+
 // Ürün silme (DELETE /api/products?id=)
 app.delete("/api/products", (req, res) => {
   const id = req.query.id;
@@ -320,23 +329,21 @@ app.post("/api/products", (req, res) => {
     return res.status(400).json({ success: false, message: "Eksik zorunlu alan var." });
   }
 
-  const sql = `
-    INSERT INTO products
-      (name, price, stock, base64, subcategory_id, brand_id, discount_type, discount_value, discount_scope, category)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `;
-  db.query(sql, [
-    name,
-    price,
-    stock,
-    base64 || null,
-    subcategory_id,
-    brand_id,
-    discount_type || "none",
-    discount_value || 0,
-    discount_scope || "product",
-    category
-  ], (err, result) => {
+const sql = `
+  INSERT INTO products
+    (name, price, stock, base64, subcategory_id, brand_id,
+     discount_type, discount_value, discount_scope,
+     category, has_limit, limit_qty)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`;
+db.query(sql, [
+  name, price, stock, base64,
+  subcategory_id, brand_id,
+  discount_type, discount_value, discount_scope,
+  category,   // önceki alanlar
+  has_limit,  // 1 veya 0
+  limit_qty   // sayı ya da null
+], (err, result) => {
     if (err) {
       console.error("Ürün ekleme hatası:", err);
       return res.status(500).json({ success: false, message: "Ürün eklenemedi", error: err.message });

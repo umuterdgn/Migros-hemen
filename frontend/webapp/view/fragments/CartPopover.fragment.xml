@@ -1,0 +1,31 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
+  <Popover
+    id="cartPopover"
+    showHeader="false"
+    placement="Bottom"
+    modal="false"
+    contentWidth="300px"
+    afterOpen=".onPopoverAfterOpen"
+    afterClose=".onPopoverAfterClose"
+  >
+    <List items="{cartModel>/cartItems}">
+      <ObjectListItem
+        title="{cartModel>name}"
+        intro="Adet: {cartModel>quantity}"
+        number="{cartModel>price}"
+        numberUnit="₺"
+        icon="{cartModel>src}"
+        iconDensityAware="false"
+        iconInset="true"
+      />
+    </List>
+    <VBox class="sapUiSmallMargin">
+      <Button
+        text="Sepete Git"
+        press=".onPressCart"
+        width="100%"
+        type="Emphasized"
+      />
+    </VBox>
+  </Popover>
+</core:FragmentDefinition>

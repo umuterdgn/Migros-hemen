@@ -12,7 +12,11 @@ sap.ui.define([
     init: function () {
       // 1) Üst sınıf init’i bir kez çağrılıyor
       UIComponent.prototype.init.apply(this, arguments);
-
+      this.setModel(new JSONModel({
+      cartItems: [],
+      summary: { totalItems: 0, /*…*/ },
+      buttonText: "Sepetim (0)"
+      }), "cartModel");
       // 2) Tema ve stil (istiyorsan)
       sap.ui.getCore().applyTheme("sap_fiori_3");
       sap.ui.require(["sap/ui/dom/includeStylesheet"], function (includeStylesheet) {

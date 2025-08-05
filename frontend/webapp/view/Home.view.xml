@@ -73,18 +73,32 @@
             </Select> -->
 
             <!-- <Input placeholder="İndirim Değeri" type="Number" value="{/newProduct/discount_value}" width="300px" /> -->
-          
-          <unified:FileUploader
+
+<CheckBox
+  selected="{ path: '/newProduct/hasLimit', mode: 'TwoWay' }"
+  select="onLimitToggle"
+  class="sapUiSmallMarginTop"
+  text="Alım Limiti var mı?"/>
+<!-- StepInput görünürlüğü yine aynı binding ile -->
+<StepInput
+  value="{/newProduct/limitQty}"
+  min="1"
+  max="100"
+  visible="{= ${/newProduct/hasLimit} }"
+  width="100px"
+  class="sapUiSmallMarginTop"/>
+<unified:FileUploader
   id="fileUploader"
   change="onFileSelect"
   fileType="jpg,png"
   width="300px"
-/>
+  class="sapUiSmallMarginTop"/>
 <Image
   id="previewImage"
   visible="{= !!${/newProduct/image_url}}"
   src="{/newProduct/image_url}"
   width="200px"
+  class="sapUiSmallMarginTop"
 />
 
           
@@ -201,18 +215,52 @@
   value="{/editProduct/discount_value}"
   width="200px"
   placeholder="0" />
+ 
+<CheckBox
+  selected="{/editProduct/hasLimit}"
+  select="onLimitToggleForEdit"
+  text="Alım Limiti Var mı?"
+  class="sapUiSmallMarginTop"/>
+<StepInput
+  value="{/editProduct/limitQty}"
+  min="1"
+  max="100"
+  visible="{= ${/editProduct/hasLimit} }"
+  width="100px"
+  class="sapUiSmallMarginTop"/>
+
+<!-- <unified:FileUploader
+  id="editFileUploader"
+  change="onEditFileChange"
+  fileType="jpg,png"
+  width="300px"
+  class="sapUiSmallMarginTop"/>
+<Image
+  id="editPreviewImage"
+  visible="{= !!${/editProduct/image_url}}"
+  src="{/editProduct/image_url}"
+  width="200px"
+  class="sapUiSmallMarginTop"/> -->
+
 
 
         <Label text="Görsel (Base64)" />
         <unified:FileUploader change="onEditFileChange" fileType="jpg,png" />
         <Image src="{/editProduct/image_url}" width="150px" visible="{= !!${/editProduct/image_url}}" />
       </VBox>
-      <beginButton>
-        <Button text="Kaydet" type="Emphasized" press="onSaveEditedProduct" />
-      </beginButton>
-      <endButton>
-        <Button text="Kapat" press="onDialogClose" />
-      </endButton>
+       <beginButton>
+    <Button
+      text="Kaydet"
+      type="Emphasized"
+      press="onSaveEditedProduct" />
+  </beginButton>
+
+  <!-- Kapat butonu, sağdaki -->
+  <endButton>
+    <Button
+      text="Kapat"
+      press="onDialogClose" />
+  </endButton>
     </Dialog>
       </VBox>
     </HBox>

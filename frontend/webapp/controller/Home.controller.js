@@ -13,6 +13,8 @@ sap.ui.define(
         var oController = this;
         var oModel = new JSONModel({
   newProduct: {
+    hasLimit:   false,
+    limitQty:   1,
     kategori_id: null,
     subcategory_id: null,
     brand_id: null,           // <- burayı ekleyin
@@ -24,6 +26,11 @@ sap.ui.define(
     discount_type: "none",
     discount_value: 0,
     category: ""
+  },
+   editProduct: {
+    /* ... */
+    hasLimit:   false,
+    limitQty:   1
   },
 
   categories: [],
@@ -139,70 +146,63 @@ oModel.setSizeLimit(1000);
 //   });
 // },
 
-    onUrunEkle: function () {
-  const oModel = this.getView().getModel();
+    onUrunEkle: function() {
+  var oModel = this.getView().getModel();
+  var p = oModel.getProperty("/newProduct");
 
-  // Modelden direkt alıyoruz
-  const name           = oModel.getProperty("/newProduct/ad");
-  const price          = Number(oModel.getProperty("/newProduct/price"));
-  const stock          = Number(oModel.getProperty("/newProduct/stock"));
-  const base64         = oModel.getProperty("/newProduct/base64") || null;
-  const subcategory_id = Number(oModel.getProperty("/newProduct/subcategory_id"));
-  const brand_id       = Number(oModel.getProperty("/newProduct/brand_id"));
-  const discount_scope = oModel.getProperty("/newProduct/discount_scope") || "product";
-  const discount_type  = oModel.getProperty("/newProduct/discount_type")  || "none";
-  const discount_value = Number(oModel.getProperty("/newProduct/discount_value")) || 0;
-  const category       = Number(oModel.getProperty("/newProduct/kategori_id"));
-
-  // Zorunlu alan kontrolü
-  if (!name || !price || !stock || !category || !brand_id || !subcategory_id) {
+  // Zorunlu kontroller...
+  if (!p.ad || !p.price || !p.stock || !p.kategori_id || !p.brand_id || !p.subcategory_id) {
     MessageToast.show("Lütfen zorunlu alanları doldurun!");
     return;
   }
 
-  // POST isteği
+  var payload = {
+    name:           p.ad,
+    price:          Number(p.price),
+    stock:          Number(p.stock),
+    base64:         p.base64,
+    subcategory_id: Number(p.subcategory_id),
+    brand_id:       Number(p.brand_id),
+    discount_scope: p.discount_scope,
+    discount_type:  p.discount_type,
+    discount_value: Number(p.discount_value),
+    category:       Number(p.kategori_id),
+    has_limit:      p.hasLimit ? 1 : 0,
+    limit_qty:      p.hasLimit ? Number(p.limitQty) : null
+  };
+
   fetch("http://localhost:8081/api/products", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name,
-      price,
-      stock,
-      base64,
-      subcategory_id,
-      brand_id,
-      discount_scope,
-      discount_type,
-      discount_value,
-      category
-    }),
+    body: JSON.stringify(payload)      // ← BURADA payload gönderiliyor
   })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        MessageToast.show("Ürün başarıyla eklendi!");
-        // Formu temizle
-        oModel.setProperty("/newProduct", {
-          kategori_id: null,
-          subcategory_id: null,
-          brand_id: null,
-          ad: "",
-          price: "",
-          stock: "",
-          base64: "",
-          discount_scope: "product",
-          discount_type: "none",
-          discount_value: 0,
-          category: ""
-        });
-      } else {
-        MessageToast.show("Ürün eklenemedi: " + data.message);
-      }
-    })
-    .catch(() => {
-      MessageToast.show("Sunucu hatası!");
-    });
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      MessageToast.show("Ürün başarıyla eklendi!");
+      // formu sıfırla...
+      oModel.setProperty("/newProduct", {
+        hasLimit: false,
+        limitQty: 1,
+        kategori_id: null,
+        subcategory_id: null,
+        brand_id: null,
+        ad: "",
+        price: "",
+        stock: "",
+        base64: "",
+        discount_scope: "product",
+        discount_type: "none",
+        discount_value: 0,
+        category: ""
+      });
+    } else {
+      MessageToast.show("Ürün eklenemedi: " + data.message);
+    }
+  })
+  .catch(() => MessageToast.show("Sunucu hatası!"));
 },
+
       onDrop: function (oEvent) {
         oEvent.preventDefault();
         const oFile = oEvent.originalEvent.dataTransfer.files[0];
@@ -275,6 +275,8 @@ onBrandChange: function(oEvt) {
   // Model’e yaz
   this.getView().getModel().setProperty(sBindingPath, parseInt(sKey, 10));
 },
+
+
 
 
 // Ürün ekle butonu
@@ -377,6 +379,27 @@ onBrandChange: function(oEvt) {
       this.getView().getModel().setProperty("/editProduct", Object.assign({}, oSelected));  // deep copy editProduct'a koyuldu
       this.loadSubcategoriesForEdit(oSelected.category);  // kategori_id ise 'category' alanı
       this.byId("editDialog").open();  // popup açıldı
+      const oDefaults = {
+    hasLimit: false,
+    limitQty: 1
+  };
+  // API’dan dönen alanlar: has_limit, limit_qty
+  const oEdit = Object.assign({},
+    oDefaults,
+    {
+      // map SQL sütunlarını camelCase’e çevir
+      hasLimit: oSelected.has_limit === 1,
+      limitQty: oSelected.limit_qty || 1
+    },
+    // sonra diğer sütunları ekle
+    oSelected
+  );
+  // Modele set et
+  this.getView().getModel().setProperty("/editProduct", oEdit);
+  // Alt kategorileri yeniden yükle
+  this.loadSubcategoriesForEdit(oSelected.category);
+  // Dialog’u aç
+  this.byId("editDialog").open();   
     },
 
     // güncelleme popup içi kategori değişiminde alt kategori yükleme
@@ -393,6 +416,11 @@ onBrandChange: function(oEvt) {
         }
       });
     },
+    onDialogClose: function () {
+  // editDialog ID’sini kullandığımızdan emin ol
+  this.byId("editDialog").close();
+},
+
     // Popup kategori değiştiğinde
     onDialogCategoryChange: function (oEvent) {
       const selectedKey = oEvent.getParameter("selectedItem").getKey();
@@ -473,11 +501,24 @@ onBrandChange: function(oEvt) {
         });
       }
     },
+   onLimitToggle: function(oEvt) {
+  // CheckBox için parametre adı "selected"
+  var bSelected = oEvt.getParameter("selected");
+  this.getView().getModel().setProperty("/newProduct/hasLimit", bSelected);
+  // limitQty zaten input’a bağlı, burada opsiyonel sıfırlama yapabilirsiniz:
+  if (!bSelected) {
+    this.getView().getModel().setProperty("/newProduct/limitQty", 1);
+  }
+},
 
-    // Dialog kapatma fonksiyonu
-    onDialogClose: function () {
-      this.byId("editDialog").close();  // popup'ı kapat
-    },
+onLimitToggleForEdit: function(oEvt) {
+  var bSelected = oEvt.getParameter("selected");
+  this.getView().getModel().setProperty("/editProduct/hasLimit", bSelected);
+  if (!bSelected) {
+    this.getView().getModel().setProperty("/editProduct/limitQty", 1);
+  }
+},
+
       //Görsel Yükleme fonksiyonu
       uploadFileForProduct: function (oEvent) {
         var that = this;
